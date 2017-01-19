@@ -93,12 +93,12 @@ class TestDocking(unittest.TestCase):
   def test_vina_grid_dnn_docker_dock(self):
     """Test that VinaGridDNNDocker can dock."""
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    protein_file = os.path.join(current_dir, "1jld_protein.pdb")
-    ligand_file = os.path.join(current_dir, "1jld_ligand.sdf")
+    protein_file = "/tmp/tmpig_e9huo/1jld_ligand.pdb"
+    ligand_file = "/tmp/tmpig_e9huo/1jld_ligand.pdb"
 
     docker = dc.dock.VinaGridDNNDocker(
         exhaustiveness=1, detect_pockets=False)
-    (score, (protein_docked, ligand_docked)) = docker.dock(
+    (score, (protein_docked, ligand_docked)) = docker.dock_light(
         protein_file, ligand_file)
 
     # Check returned files exist
