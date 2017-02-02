@@ -46,11 +46,9 @@ from pcba.pcba_datasets import load_pcba
 from tox21.tox21_datasets import load_tox21
 from toxcast.toxcast_datasets import load_toxcast
 from sider.sider_datasets import load_sider
-from kaggle.kaggle_datasets import load_kaggle
 from delaney.delaney_datasets import load_delaney
 from nci.nci_datasets import load_nci
 from pdbbind.pdbbind_datasets import load_pdbbind_grid
-from chembl.chembl_datasets import load_chembl
 from gdb7.gdb7_datasets import load_gdb7
 
 def benchmark_loading_datasets(hyper_parameters, 
@@ -128,9 +126,9 @@ def benchmark_loading_datasets(hyper_parameters,
   loading_functions = {'tox21': load_tox21, 'muv': load_muv,
                        'pcba': load_pcba, 'nci': load_nci,
                        'sider': load_sider, 'toxcast': load_toxcast,
-                       'kaggle': load_kaggle, 'delaney': load_delaney,
+                       'delaney': load_delaney,
                        'pdbbind': load_pdbbind_grid,
-                       'chembl': load_chembl, 'gdb7': load_gdb7}
+                       'gdb7': load_gdb7}
   
   print('-------------------------------------')
   print('Benchmark %s on dataset: %s' % (model, dataset))
