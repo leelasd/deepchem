@@ -18,7 +18,9 @@ python setup.py install
 
 rm examples/results.csv || true
 cd examples/pdbbind
-bash get_pdbbind.sh
+if [ ! -f pdbbind_v2015.tar.gz ]; then
+    bash get_pdbbind.sh
+fi
 cd ../..
 python examples/pdbbind_datasets.py
 
