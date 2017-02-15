@@ -143,4 +143,4 @@ def load_pdbbind_grid(split="index", featurizer="grid", subset="full"):
 
 if __name__ == "__main__":
   load_pdbbind_grid(subset="core")
-  load_pdbbind_grid(subset="grid")
+  load_pdbbind_grid(subset="refined")
