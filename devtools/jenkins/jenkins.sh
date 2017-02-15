@@ -21,8 +21,8 @@ cd examples/pdbbind
 if [ ! -f pdbbind_v2015.tar.gz ]; then
     bash get_pdbbind.sh
 fi
-cd ../..
-python examples/pdbbind_datasets.py
+cd ..
+python pdbbind/pdbbind_datasets.py
 
 source deactivate
 conda remove --name $envname --all
