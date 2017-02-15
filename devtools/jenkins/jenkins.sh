@@ -19,7 +19,7 @@ python setup.py install
 rm examples/results.csv || true
 cd examples/pdbbind
 bash get_pdbbind.sh
-cd ..
+cd ../..
 python examples/pdbbind_datasets.py
 
 source deactivate
