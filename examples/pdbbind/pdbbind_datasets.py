@@ -142,5 +142,6 @@ def load_pdbbind_grid(split="index", featurizer="grid", subset="full"):
   return tasks, (train, valid, test), transformers
 
 if __name__ == "__main__":
+  load_pdbbind_grid(subset="full")
   load_pdbbind_grid(subset="core")
   load_pdbbind_grid(subset="refined")
