@@ -711,6 +711,7 @@ if __name__ == '__main__':
       'n_fully_connected_nodes': 256,
       'seed': 123
   }]
+  datasets.remove('toxcast')
 
   for split in splitters:
     for dataset in datasets:
