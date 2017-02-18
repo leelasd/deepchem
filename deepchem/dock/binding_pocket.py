@@ -18,11 +18,12 @@ from subprocess import call
 from scipy.spatial import ConvexHull
 from deepchem.feat import hydrogenate_and_compute_partial_charges
 from deepchem.feat.atomic_coordinates import AtomicCoordinates
-from deepchem.feat.grid_featurizer import load_molecule
-from deepchem.feat.binding_pocket_features import BindingPocketFeaturizer 
-from deepchem.feat.fingerprints import CircularFingerprint 
+from deepchem.feat.rdkit_grid_featurizer import load_molecule
+from deepchem.feat.binding_pocket_features import BindingPocketFeaturizer
+from deepchem.feat.fingerprints import CircularFingerprint
 from deepchem.models.sklearn_models import SklearnModel
 from deepchem.data.datasets import NumpyDataset
+
 
 def extract_active_site(protein_file, ligand_file, cutoff=4):
   """Extracts a box for the active site."""
@@ -52,8 +53,9 @@ def extract_active_site(protein_file, ligand_file, cutoff=4):
   y_max = int(np.ceil(np.amax(pocket_coords[:, 1])))
   z_min = int(np.floor(np.amin(pocket_coords[:, 2])))
   z_max = int(np.ceil(np.amax(pocket_coords[:, 2])))
-  return (((x_min, x_max), (y_min, y_max), (z_min, z_max)),
-          pocket_atoms, pocket_coords)
+  return (((x_min, x_max), (y_min, y_max), (z_min, z_max)), pocket_atoms,
+          pocket_coords)
+
 
 def compute_overlap(mapping, box1, box2):
   """Computes overlap between the two boxes.
@@ -63,7 +65,8 @@ def compute_overlap(mapping, box1, box2):
   """
   atom1 = set(mapping[box1])
   atom2 = set(mapping[box2])
-  return len(atom1.intersection(atom2))/float(len(atom1))
+  return len(atom1.intersection(atom2)) / float(len(atom1))
+
 
 def get_all_boxes(coords, pad=5):
   """Get all pocket boxes for protein coords.
@@ -81,13 +84,14 @@ def get_all_boxes(coords, pad=5):
         [coords[triangle, 0], coords[triangle, 1], coords[triangle, 2]]).T
     # We voxelize so all grids have integral coordinates (convenience)
     x_min, x_max = np.amin(points[:, 0]), np.amax(points[:, 0])
-    x_min, x_max = int(np.floor(x_min))-pad, int(np.ceil(x_max))+pad
+    x_min, x_max = int(np.floor(x_min)) - pad, int(np.ceil(x_max)) + pad
     y_min, y_max = np.amin(points[:, 1]), np.amax(points[:, 1])
-    y_min, y_max = int(np.floor(y_min))-pad, int(np.ceil(y_max))+pad
+    y_min, y_max = int(np.floor(y_min)) - pad, int(np.ceil(y_max)) + pad
     z_min, z_max = np.amin(points[:, 2]), np.amax(points[:, 2])
-    z_min, z_max = int(np.floor(z_min))-pad, int(np.ceil(z_max))+pad
+    z_min, z_max = int(np.floor(z_min)) - pad, int(np.ceil(z_max)) + pad
     boxes.append(((x_min, x_max), (y_min, y_max), (z_min, z_max)))
-  return boxes 
+  return boxes
+
 
 def boxes_to_atoms(atom_coords, boxes):
   """Maps each box to a list of atoms in that box.
@@ -101,7 +105,7 @@ def boxes_to_atoms(atom_coords, boxes):
     (x_min, x_max), (y_min, y_max), (z_min, z_max) = box
     print("Handing box %d/%d" % (box_ind, len(boxes)))
     for atom_ind in range(len(atom_coords)):
-      atom = atom_coords[atom_ind] 
+      atom = atom_coords[atom_ind]
       x_cont = x_min <= atom[0] and atom[0] <= x_max
       y_cont = y_min <= atom[1] and atom[1] <= y_max
       z_cont = z_min <= atom[2] and atom[2] <= z_max
@@ -110,10 +114,11 @@ def boxes_to_atoms(atom_coords, boxes):
     mapping[box] = box_atoms
   return mapping
 
+
 def merge_boxes(box1, box2):
   """Merges two boxes."""
-  (x_min1, x_max1), (y_min1, y_max1), (z_min1, z_max1) = box1 
-  (x_min2, x_max2), (y_min2, y_max2), (z_min2, z_max2) = box2 
+  (x_min1, x_max1), (y_min1, y_max1), (z_min1, z_max1) = box1
+  (x_min2, x_max2), (y_min2, y_max2), (z_min2, z_max2) = box2
   x_min = min(x_min1, x_min2)
   y_min = min(y_min1, y_min2)
   z_min = min(z_min1, z_min2)
@@ -121,6 +126,7 @@ def merge_boxes(box1, box2):
   y_max = max(y_max1, y_max2)
   z_max = max(z_max1, z_max2)
   return ((x_min, x_max), (y_min, y_max), (z_min, z_max))
+
 
 def merge_overlapping_boxes(mapping, boxes, threshold=.8):
   """Merge boxes which have an overlap greater than threshold.
@@ -166,6 +172,7 @@ def merge_overlapping_boxes(mapping, boxes, threshold=.8):
     mapping = new_mapping
   return outputs, mapping
 
+
 class BindingPocketFinder(object):
   """Abstract superclass for binding pocket detectors"""
 
@@ -173,11 +180,13 @@ class BindingPocketFinder(object):
     """Finds potential binding pockets in proteins."""
     raise NotImplementedError
 
+
 class ConvexHullPocketFinder(BindingPocketFinder):
   """Implementation that uses convex hull of protein to find pockets.
 
   Based on https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4112621/pdf/1472-6807-14-18.pdf
   """
+
   def __init__(self, pad=5):
     self.pad = pad
 
@@ -203,6 +212,7 @@ class ConvexHullPocketFinder(BindingPocketFinder):
       pocket_coords.append(coords)
     return pockets, pocket_atoms_map, pocket_coords
 
+
 class RFConvexHullPocketFinder(BindingPocketFinder):
   """Uses pre-trained RF model + ConvexHulPocketFinder to select pockets."""
 
@@ -214,7 +224,9 @@ class RFConvexHullPocketFinder(BindingPocketFinder):
     self.base_dir = tempfile.mkdtemp()
     print("About to download trained model.")
     # TODO(rbharath): Shift refined to full once trained.
-    call(("wget -c http://deepchem.io.s3-website-us-west-1.amazonaws.com/trained_models/pocket_random_refined_RF.tar.gz").split())
+    call((
+        "wget -c http://deepchem.io.s3-website-us-west-1.amazonaws.com/trained_models/pocket_random_refined_RF.tar.gz"
+    ).split())
     call(("tar -zxvf pocket_random_refined_RF.tar.gz").split())
     call(("mv pocket_random_refined_RF %s" % (self.base_dir)).split())
     self.model_dir = os.path.join(self.base_dir, "pocket_random_refined_RF")
@@ -238,8 +250,7 @@ class RFConvexHullPocketFinder(BindingPocketFinder):
     if not ligand_file.endswith(".sdf"):
       raise ValueError("Only .sdf ligand files can be featurized.")
     ligand_basename = os.path.basename(ligand_file).split(".")[0]
-    ligand_mol2 = os.path.join(
-        self.base_dir, ligand_basename + ".mol2")
+    ligand_mol2 = os.path.join(self.base_dir, ligand_basename + ".mol2")
 
     # Write mol2 file for ligand
     obConversion = ob.OBConversion()
@@ -247,7 +258,7 @@ class RFConvexHullPocketFinder(BindingPocketFinder):
     ob_mol = ob.OBMol()
     obConversion.ReadFile(ob_mol, str(ligand_file))
     obConversion.WriteFile(ob_mol, str(ligand_mol2))
-      
+
     # Featurize ligand
     mol = Chem.MolFromMol2File(str(ligand_mol2), removeHs=False)
     if mol is None:
@@ -262,7 +273,7 @@ class RFConvexHullPocketFinder(BindingPocketFinder):
     n_pockets = len(pockets)
     n_pocket_features = BindingPocketFeaturizer.n_features
 
-    features = np.zeros((n_pockets, n_pocket_features+n_ligand_features))
+    features = np.zeros((n_pockets, n_pocket_features + n_ligand_features))
     pocket_features = self.pocket_featurizer.featurize(
         protein_file, pockets, pocket_atoms_map, pocket_coords)
     # Note broadcast operation
@@ -281,7 +292,7 @@ class RFConvexHullPocketFinder(BindingPocketFinder):
       # TODO(rbharath): For now, using a weak cutoff. Fix later.
       #if pocket_preds[pocket_ind] == 1:
       if pocket_pred_proba[pocket_ind][1] > .15:
-      #################################################### DEBUG
+        #################################################### DEBUG
         pocket = pockets[pocket_ind]
         active_pockets.append(pocket)
         active_pocket_atoms_map[pocket] = pocket_atoms_map[pocket]

@@ -5,6 +5,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import unicode_literals
 
+from deepchem.utils import rdkit_util
+
 __author__ = "Bharath Ramsundar and Jacob Durrant"
 __license__ = "GNU General Public License"
 
@@ -13,6 +15,7 @@ import os
 import subprocess
 import openbabel
 import numpy as np
+from rdkit.Chem import rdPartialCharges
 
 
 def force_partial_charge_computation(mol):
@@ -31,6 +34,7 @@ def force_partial_charge_computation(mol):
   for obatom in openbabel.OBMolAtomIter(mol):
     obatom.GetPartialCharge()
 
+
 def pdbqt_to_pdb(input_file, output_directory):
   """Convert pdbqt file to pdb file.
 
@@ -47,7 +51,9 @@ def pdbqt_to_pdb(input_file, output_directory):
     obabel_command = ["obabel", "-ipdbqt", input_file, "-opdb"]
     subprocess.Popen(obabel_command, stdout=outfile).wait()
 
-def hydrogenate_and_compute_partial_charges(input_file, input_format,
+
+def hydrogenate_and_compute_partial_charges(input_file,
+                                            input_format,
                                             hyd_output=None,
                                             pdbqt_output=None,
                                             protein=True,
@@ -118,8 +124,45 @@ def hydrogenate_and_compute_partial_charges(input_file, input_format,
     with open(pdbqt_output, "w") as f:
       f.writelines(filtered_lines)
 
+
+def rdkit_hydrogenate_and_compute_partial_charges(input_file,
+                                                  input_format,
+                                                  hyd_output=None,
+                                                  pdbqt_output=None,
+                                                  protein=True,
+                                                  verbose=True):
+  """Outputs a hydrogenated pdb and a pdbqt with partial charges.
+
+  Takes an input file in specified format. Generates two outputs:
+
+  -) A pdb file that contains a hydrogenated (at pH 7.4) version of
+     original compound.
+  -) A pdbqt file that has computed Gasteiger partial charges. This pdbqt
+     file is build from the hydrogenated pdb.
+
+  Parameters
+  ----------
+  input_file: String
+    Path to input file.
+  input_format: String
+    Name of input format.
+  """
+  if verbose:
+    print("Create pdb with hydrogens added")
+
+  mol = rdkit_util.load_molecule(input_file, add_hydrogens=True)[1]
+  if verbose:
+    print("Create pdb with hydrogens added")
+  rdkit_util.write_molecule(mol, hyd_output)
+  rdPartialCharges.ComputeGasteigerCharges(mol)
+  if verbose:
+    print("Create a pdbqt file from the hydrogenated pdb above.")
+  rdkit_util.write_molecule(mol, pdbqt_output)
+
+
 class AromaticRing(object):
   """Holds information about an aromatic ring."""
+
   def __init__(self, center, indices, plane_coeff, radius):
     """
     Initializes an aromatic.
@@ -159,7 +202,7 @@ def average_point(points):
   for point in points:
     coords += point.as_array().astype(coords.dtype)
   if len(points) > 0:
-    return Point(coords=coords/len(points))
+    return Point(coords=coords / len(points))
   else:
     return Point(coords=coords)
 
@@ -168,6 +211,7 @@ class Point(object):
   """
   Simple implementation for a point in 3-space.
   """
+
   def __init__(self, x=None, y=None, z=None, coords=None):
     """
     Inputs can be specified either by explicitly providing x, y, z coords
@@ -222,11 +266,20 @@ class Atom(object):
   annotations about the atom.
   """
 
-  def __init__(self, atomname="", residue="",
+  def __init__(self,
+               atomname="",
+               residue="",
                coordinates=Point(coords=np.array([99999, 99999, 99999])),
-               element="", pdb_index="", line="", atomtype="",
-               indices_of_atoms_connecting=None, charge=0, resid=0,
-               chain="", structure="", comment=""):
+               element="",
+               pdb_index="",
+               line="",
+               atomtype="",
+               indices_of_atoms_connecting=None,
+               charge=0,
+               resid=0,
+               chain="",
+               structure="",
+               comment=""):
     """
     Initializes an atom.
 
@@ -312,9 +365,9 @@ class Atom(object):
       Index in associated PDB file.
     """
     output = "ATOM "
-    output = (output + str(index).rjust(6) + self.atomname.rjust(5) +
-              self.residue.rjust(4) + self.chain.rjust(2) +
-              str(self.resid).rjust(4))
+    output = (
+        output + str(index).rjust(6) + self.atomname.rjust(5) +
+        self.residue.rjust(4) + self.chain.rjust(2) + str(self.resid).rjust(4))
     coords = self.coordinates.as_array()  # [x, y, z]
     output = output + ("%.3f" % coords[0]).rjust(12)
     output = output + ("%.3f" % coords[1]).rjust(8)
@@ -343,8 +396,8 @@ class Atom(object):
     """Determine whether receptor atom belongs to residue sidechain or backbone.
     """
     # TODO(rbharath): Should this be an atom function?
-    if (self.atomname.strip() == "CA" or self.atomname.strip() == "C"
-        or self.atomname.strip() == "O" or self.atomname.strip() == "N"):
+    if (self.atomname.strip() == "CA" or self.atomname.strip() == "C" or
+        self.atomname.strip() == "O" or self.atomname.strip() == "N"):
       return "BACKBONE"
     else:
       return "SIDECHAIN"
@@ -391,9 +444,8 @@ class Atom(object):
       # the PDB would have this line commented out
       self.atomname = self.atomname + " "
 
-    self.coordinates = Point(
-        coords=np.array(
-            [float(line[30:38]), float(line[38:46]), float(line[46:54])]))
+    self.coordinates = Point(coords=np.array(
+        [float(line[30:38]), float(line[38:46]), float(line[46:54])]))
 
     # now atom type (for pdbqt)
     if line[77:79].strip():
@@ -411,13 +463,14 @@ class Atom(object):
     else:
       self.charge = 0.0
 
-    if self.element == "": # try to guess at element from name
+    if self.element == "":  # try to guess at element from name
       two_letters = self.atomname[0:2].strip().upper()
-      valid_two_letters = ["BR", "CL", "BI", "AS", "AG", "LI",
-                           "HG", "MG", "MN", "RH", "ZN", "FE"]
+      valid_two_letters = [
+          "BR", "CL", "BI", "AS", "AG", "LI", "HG", "MG", "MN", "RH", "ZN", "FE"
+      ]
       if two_letters in valid_two_letters:
         self.element = two_letters
-      else: #So, just assume it's the first letter.
+      else:  #So, just assume it's the first letter.
         # Any number needs to be removed from the element name
         self.element = self.atomname
         self.element = self.element.replace('0', '')
@@ -442,7 +495,8 @@ class Atom(object):
 
     if line[23:26].strip() != "":
       self.resid = int(line[23:26])
-    else: self.resid = 1
+    else:
+      self.resid = 1
 
     self.chain = line[21:22]
     if self.residue.strip() == "":
@@ -453,6 +507,7 @@ class Charged(object):
   """
   A class that represeents a charged atom.
   """
+
   def __init__(self, coordinates, indices, positive):
     """
     Parameters
@@ -470,23 +525,27 @@ class Charged(object):
     self.positive = positive
 
 
-def vector_subtraction(point1, point2): # point1 - point2
+def vector_subtraction(point1, point2):  # point1 - point2
   """Subtracts the coordinates of the provided points."""
   return Point(coords=point1.as_array() - point2.as_array())
 
-def cross_product(point1, point2): # never tested
+
+def cross_product(point1, point2):  # never tested
   """Calculates the cross-product of provided points."""
   return Point(coords=np.cross(point1.as_array(), point2.as_array()))
 
+
 def vector_scalar_multiply(point, scalar):
   """Multiplies the provided point by scalar."""
-  return Point(coords=scalar*point.as_array())
+  return Point(coords=scalar * point.as_array())
+
 
 def dot_product(point1, point2):
   """Dot product of points."""
   return np.dot(point1.as_array(), point2.as_array())
 
-def dihedral(point1, point2, point3, point4): # never tested
+
+def dihedral(point1, point2, point3, point4):  # never tested
   """Compute dihedral angle between 4 points.
 
     TODO(rbharath): Write a nontrivial test for this.
@@ -503,24 +562,28 @@ def dihedral(point1, point2, point3, point4): # never tested
   radians = math.atan2(dot_product(b1XMagb2, b2Xb3), dot_product(b1Xb2, b2Xb3))
   return radians
 
+
 def angle_between_three_points(point1, point2, point3):
   """Computes the angle (in radians) between the three provided points."""
   return angle_between_points(
-      vector_subtraction(point1, point2),
-      vector_subtraction(point3, point2))
+      vector_subtraction(point1, point2), vector_subtraction(point3, point2))
+
 
 def angle_between_points(point1, point2):
   """Computes the angle (in radians) between two points."""
   return math.acos(
-      dot_product(point1, point2)/(point1.magnitude()*point2.magnitude()))
+      dot_product(point1, point2) / (point1.magnitude() * point2.magnitude()))
+
 
 def normalized_vector(point):
   """Normalize provided point."""
-  return Point(coords=point.as_array()/np.linalg.norm(point.as_array()))
+  return Point(coords=point.as_array() / np.linalg.norm(point.as_array()))
+
 
 def distance(point1, point2):
   """Computes distance between two points."""
   return point1.dist_to(point2)
+
 
 def project_point_onto_plane(point, plane_coefficients):
   """Finds nearest point on specified plane to given point.
@@ -537,7 +600,7 @@ def project_point_onto_plane(point, plane_coefficients):
   normal = np.array(plane_coefficients[:3])
   # We first shift by basepoint (a point on given plane) to make math
   # simpler. basepoint is given by d/||n||^2 * n
-  basepoint = (offset/np.linalg.norm(normal)**2) * normal
+  basepoint = (offset / np.linalg.norm(normal)**2) * normal
   diff = point.as_array() - basepoint
   # The perpendicular component of diff to plane is
   # (n^T diff / ||n||^2) * n
