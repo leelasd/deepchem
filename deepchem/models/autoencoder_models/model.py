@@ -1,6 +1,6 @@
 from keras import backend as K
 from keras import objectives
-from keras.layers import Input, Lambda
+from keras.layers import Lambda
 from keras.layers.convolutional import Convolution1D
 from keras.layers.core import Dense, Flatten, RepeatVector
 from keras.layers.recurrent import GRU
@@ -17,16 +17,16 @@ class MoleculeVAE():
              max_length=120,
              latent_rep_size=292,
              weights_file=None):
-    x = Input(shape=(max_length, charset_length))
+    x = K.layers.Input(shape=(max_length, charset_length))
     _, z = self._buildEncoder(x, latent_rep_size, max_length)
     self.encoder = Model(x, z)
 
-    encoded_input = Input(shape=(latent_rep_size,))
+    encoded_input = K.layers.Input(shape=(latent_rep_size,))
     self.decoder = Model(encoded_input,
                          self._buildDecoder(encoded_input, latent_rep_size,
                                             max_length, charset_length))
 
-    x1 = Input(shape=(max_length, charset_length))
+    x1 = K.layers.Input(shape=(max_length, charset_length))
     vae_loss, z1 = self._buildEncoder(x1, latent_rep_size, max_length)
     self.autoencoder = Model(x1,
                              self._buildDecoder(z1, latent_rep_size, max_length,
