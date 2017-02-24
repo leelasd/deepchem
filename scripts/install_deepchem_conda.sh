@@ -20,7 +20,7 @@ yes | pip install six
 conda install -y -c omnia mdtraj
 conda install -y scikit-learn
 conda install -y setuptools
-conda install -y keras
+conda pip install keras==1.2.2
 conda install -y -c conda-forge protobuf=3.1.0
 yes | pip install $tensorflow==1.0.0
 yes | pip install nose
