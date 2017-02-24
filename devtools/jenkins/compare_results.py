@@ -2,15 +2,15 @@ from nose.tools import assert_true, nottest
 
 CUSHION_PERCENT = 0.01
 BENCHMARK_TO_DESIRED_KEY_MAP = {
-  "index": "Index splitting",
-  "random": "Random splitting",
-  "scaffold": "Scaffold splitting",
-  "logreg": "logistic regression",
-  "tf": "Multitask network",
-  "tf_robust": "robust MT-NN",
-  "tf_regression": "NN regression",
-  "graphconv": "graph convolution",
-  "graphconvreg": "graphconv regression",
+    "index": "Index splitting",
+    "random": "Random splitting",
+    "scaffold": "Scaffold splitting",
+    "logreg": "logistic regression",
+    "tf": "Multitask network",
+    "tf_robust": "robust MT-NN",
+    "tf_regression": "NN regression",
+    "graphconv": "graph convolution",
+    "graphconvreg": "graphconv regression",
 }
 DESIRED_RESULTS_CSV = "devtools/jenkins/desired_results.csv"
 TEST_RESULTS_CSV = "examples/results.csv"
@@ -21,11 +21,11 @@ def parse_desired_results(desired_results):
   for line in desired_results:
     vars = line.split(',')
     retval.append({
-      "split": vars[0],
-      "data_set": vars[1],
-      "model": vars[2],
-      "train_score": float(vars[3]),
-      "test_score": float(vars[4])
+        "split": vars[0],
+        "data_set": vars[1],
+        "model": vars[2],
+        "train_score": float(vars[3]),
+        "test_score": float(vars[4])
     })
   return retval
 
@@ -36,11 +36,11 @@ def parse_test_results(test_results):
   for line in test_results:
     vars = line.split(',')
     retval.append({
-      "split": BENCHMARK_TO_DESIRED_KEY_MAP[vars[2]],
-      "data_set": vars[1],
-      "model": BENCHMARK_TO_DESIRED_KEY_MAP[vars[5]],
-      "train_score": float(vars[6]),
-      "test_score": float(vars[9])
+        "split": BENCHMARK_TO_DESIRED_KEY_MAP[vars[2]],
+        "data_set": vars[1],
+        "model": BENCHMARK_TO_DESIRED_KEY_MAP[vars[5]],
+        "train_score": float(vars[6]),
+        "test_score": float(vars[9])
     })
   return retval
 
@@ -72,7 +72,11 @@ def test_compare_results():
   for test_result in test_results:
     desired_result = find_desired_result(test_result, desired_results)
     if not is_good_result(test_result, desired_result):
-      exceptions.append(({"test_result": test_result}, {"desired_result": desired_result}))
+      exceptions.append(({
+          "test_result": test_result
+      }, {
+          "desired_result": desired_result
+      }))
   if len(exceptions) > 0:
     for exception in exceptions:
       print(exception)
