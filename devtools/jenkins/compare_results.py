@@ -8,7 +8,9 @@ BENCHMARK_TO_DESIRED_KEY_MAP = {
   "logreg": "logistic regression",
   "tf": "Multitask network",
   "tf_robust": "robust MT-NN",
+  "tf_regression": "NN regression",
   "graphconv": "graph convolution",
+  "graphconvreg": "graphconv regression",
 }
 DESIRED_RESULTS_CSV = "devtools/jenkins/desired_results.csv"
 TEST_RESULTS_CSV = "examples/results.csv"
