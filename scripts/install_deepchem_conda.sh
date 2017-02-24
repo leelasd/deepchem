@@ -23,5 +23,5 @@ conda install -y setuptools
 pip install keras==1.2.2
 conda install h5py
 conda install -y -c conda-forge protobuf=3.1.0
-yes | pip install $tensorflow==1.0.0
+yes | pip install $tensorflow==0.12.1
 yes | pip install nose
