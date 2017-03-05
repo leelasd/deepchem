@@ -13,7 +13,7 @@ then
     exit_success
 fi
 
-yapf -d $CHANGED_FILES --style .style.yapf > diff.txt
+yapf -d $CHANGED_FILES > diff.txt
 
 if [ -s diff.txt ]
 then
