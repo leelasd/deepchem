@@ -1,3 +1,4 @@
 [style]
 based_on_style = google
 indent_width = 2
+SPLIT_BEFORE_FIRST_ARGUMENT = False
