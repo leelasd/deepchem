@@ -6,6 +6,7 @@ sudo: required
 dist: trusty
 install:
 - pip install yapf==0.16.0
+
 script:
 - bash devtools/travis-ci/test_format_code.sh
 after_success:
