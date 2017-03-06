@@ -2,4 +2,4 @@
 based_on_style = google
 indent_width = 2
 split_before_first_argument = False
-split_penalty_after_opening_bracket = 50
+split_penalty_after_opening_bracket = 100000000
