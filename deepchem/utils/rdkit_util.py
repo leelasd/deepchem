@@ -95,8 +95,6 @@ def load_molecule(molecule_file, add_hydrogens=True, calc_charges=True):
   try:
     if add_hydrogens:
       my_mol = add_hydrogens_to_mol(my_mol)
-    if should_sanitize:
-      Chem.SanitizeMol(my_mol)
     if calc_charges:
       compute_charges(my_mol)
   except Exception as e:
