@@ -76,12 +76,14 @@ def load_molecule(molecule_file, add_hydrogens=True, calc_charges=True):
   Given molecule_file, returns a tuple of xyz coords of molecule
   and an rdkit object representing that molecule
   """
+  should_sanitize = True
   if ".mol2" in molecule_file or ".sdf" in molecule_file:
     suppl = Chem.SDMolSupplier(str(molecule_file), sanitize=False)
     my_mol = suppl[0]
   elif ".pdbqt" in molecule_file:
     raise MoleculeLoadException("Don't support pdbqt files yet")
   elif ".pdb" in molecule_file:
+    should_sanitize = False
     my_mol = Chem.MolFromPDBFile(
         str(molecule_file), sanitize=False, removeHs=False)
   else:
@@ -90,10 +92,15 @@ def load_molecule(molecule_file, add_hydrogens=True, calc_charges=True):
   if my_mol is None:
     raise ValueError("Unable to read non None Molecule Object")
 
-  if add_hydrogens:
-    my_mol = add_hydrogens_to_mol(my_mol)
-  if calc_charges:
-    compute_charges(my_mol)
+  try:
+    if add_hydrogens:
+      my_mol = add_hydrogens_to_mol(my_mol)
+    if should_sanitize:
+      Chem.SanitizeMol(my_mol)
+    if calc_charges:
+      compute_charges(my_mol)
+  except Exception as e:
+    print("FOOBARBASHQUANTS %s" % molecule_file)
 
   xyz = get_xyz_from_mol(my_mol)
 
