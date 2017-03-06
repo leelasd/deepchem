@@ -70,13 +70,16 @@ def test_compare_results():
   test_results = parse_test_results(test_results)
   exceptions = []
   for test_result in test_results:
-    desired_result = find_desired_result(test_result, desired_results)
-    if not is_good_result(test_result, desired_result):
-      exceptions.append(({
-          "test_result": test_result
-      }, {
-          "desired_result": desired_result
-      }))
+    try:
+      desired_result = find_desired_result(test_result, desired_results)
+      if not is_good_result(test_result, desired_result):
+        exceptions.append(({
+            "test_result": test_result
+        }, {
+            "desired_result": desired_result
+        }))
+    except Exception as e:
+      exceptions.append(test_result)
   if len(exceptions) > 0:
     for exception in exceptions:
       print(exception)
