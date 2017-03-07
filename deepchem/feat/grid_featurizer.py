@@ -20,6 +20,7 @@ from functools import partial
 from deepchem.feat import ComplexFeaturizer
 from deepchem.utils.save import log
 """
+TODO(LESWING) delete
 http://stackoverflow.com/questions/38987/how-can-i-merge-two-python-dictionaries-in-a-single-expression
 """
 

@@ -12,7 +12,6 @@ __license__ = "GPL"
 import os
 import tempfile
 import numpy as np
-import openbabel as ob
 from rdkit import Chem
 from subprocess import call
 from scipy.spatial import ConvexHull
@@ -235,55 +234,57 @@ class RFConvexHullPocketFinder(BindingPocketFinder):
     examples/binding_pockets/binding_pocket_datasets.py. Find way to refactor
     to avoid code duplication.
     """
-    if not ligand_file.endswith(".sdf"):
-      raise ValueError("Only .sdf ligand files can be featurized.")
-    ligand_basename = os.path.basename(ligand_file).split(".")[0]
-    ligand_mol2 = os.path.join(
-        self.base_dir, ligand_basename + ".mol2")
-
-    # Write mol2 file for ligand
-    obConversion = ob.OBConversion()
-    conv_out = obConversion.SetInAndOutFormats(str("sdf"), str("mol2"))
-    ob_mol = ob.OBMol()
-    obConversion.ReadFile(ob_mol, str(ligand_file))
-    obConversion.WriteFile(ob_mol, str(ligand_mol2))
-      
-    # Featurize ligand
-    mol = Chem.MolFromMol2File(str(ligand_mol2), removeHs=False)
-    if mol is None:
-      return None, None
-    # Default for CircularFingerprint
-    n_ligand_features = 1024
-    ligand_features = self.ligand_featurizer.featurize([mol])
-
-    # Featurize pocket
-    pockets, pocket_atoms_map, pocket_coords = self.convex_finder.find_pockets(
-        protein_file, ligand_file)
-    n_pockets = len(pockets)
-    n_pocket_features = BindingPocketFeaturizer.n_features
-
-    features = np.zeros((n_pockets, n_pocket_features+n_ligand_features))
-    pocket_features = self.pocket_featurizer.featurize(
-        protein_file, pockets, pocket_atoms_map, pocket_coords)
-    # Note broadcast operation
-    features[:, :n_pocket_features] = pocket_features
-    features[:, n_pocket_features:] = ligand_features
-    dataset = NumpyDataset(X=features)
-    pocket_preds = self.model.predict(dataset)
-    pocket_pred_proba = np.squeeze(self.model.predict_proba(dataset))
-
-    # Find pockets which are active
-    active_pockets = []
-    active_pocket_atoms_map = {}
-    active_pocket_coords = []
-    for pocket_ind in range(len(pockets)):
-      #################################################### DEBUG
-      # TODO(rbharath): For now, using a weak cutoff. Fix later.
-      #if pocket_preds[pocket_ind] == 1:
-      if pocket_pred_proba[pocket_ind][1] > .15:
-      #################################################### DEBUG
-        pocket = pockets[pocket_ind]
-        active_pockets.append(pocket)
-        active_pocket_atoms_map[pocket] = pocket_atoms_map[pocket]
-        active_pocket_coords.append(pocket_coords[pocket_ind])
-    return active_pockets, active_pocket_atoms_map, active_pocket_coords
+    # if not ligand_file.endswith(".sdf"):
+    #   raise ValueError("Only .sdf ligand files can be featurized.")
+    # ligand_basename = os.path.basename(ligand_file).split(".")[0]
+    # ligand_mol2 = os.path.join(
+    #     self.base_dir, ligand_basename + ".mol2")
+    #
+    # # Write mol2 file for ligand
+    # obConversion = ob.OBConversion()
+    # conv_out = obConversion.SetInAndOutFormats(str("sdf"), str("mol2"))
+    # ob_mol = ob.OBMol()
+    # obConversion.ReadFile(ob_mol, str(ligand_file))
+    # obConversion.WriteFile(ob_mol, str(ligand_mol2))
+    #
+    # # Featurize ligand
+    # mol = Chem.MolFromMol2File(str(ligand_mol2), removeHs=False)
+    # if mol is None:
+    #   return None, None
+    # # Default for CircularFingerprint
+    # n_ligand_features = 1024
+    # ligand_features = self.ligand_featurizer.featurize([mol])
+    #
+    # # Featurize pocket
+    # pockets, pocket_atoms_map, pocket_coords = self.convex_finder.find_pockets(
+    #     protein_file, ligand_file)
+    # n_pockets = len(pockets)
+    # n_pocket_features = BindingPocketFeaturizer.n_features
+    #
+    # features = np.zeros((n_pockets, n_pocket_features+n_ligand_features))
+    # pocket_features = self.pocket_featurizer.featurize(
+    #     protein_file, pockets, pocket_atoms_map, pocket_coords)
+    # # Note broadcast operation
+    # features[:, :n_pocket_features] = pocket_features
+    # features[:, n_pocket_features:] = ligand_features
+    # dataset = NumpyDataset(X=features)
+    # pocket_preds = self.model.predict(dataset)
+    # pocket_pred_proba = np.squeeze(self.model.predict_proba(dataset))
+    #
+    # # Find pockets which are active
+    # active_pockets = []
+    # active_pocket_atoms_map = {}
+    # active_pocket_coords = []
+    # for pocket_ind in range(len(pockets)):
+    #   #################################################### DEBUG
+    #   # TODO(rbharath): For now, using a weak cutoff. Fix later.
+    #   #if pocket_preds[pocket_ind] == 1:
+    #   if pocket_pred_proba[pocket_ind][1] > .15:
+    #   #################################################### DEBUG
+    #     pocket = pockets[pocket_ind]
+    #     active_pockets.append(pocket)
+    #     active_pocket_atoms_map[pocket] = pocket_atoms_map[pocket]
+    #     active_pocket_coords.append(pocket_coords[pocket_ind])
+    # return active_pockets, active_pocket_atoms_map, active_pocket_coords
+    # TODO(LESWING)
+    raise ValueError("Karl Implement")

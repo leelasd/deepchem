@@ -16,7 +16,6 @@ except ImportError:
 
 
 class MoleculeLoadException(Exception):
-
   def __init__(self, *args, **kwargs):
     Exception.__init__(*args, **kwargs)
 
@@ -50,7 +49,7 @@ def add_hydrogens_to_mol(mol):
     PDBFile.writeFile(fixer.topology, fixer.positions, hydrogenated_io)
     hydrogenated_io.seek(0)
     return Chem.MolFromPDBBlock(
-        hydrogenated_io.read(), sanitize=False, removeHs=False)
+      hydrogenated_io.read(), sanitize=False, removeHs=False)
   except ValueError as e:
     logging.warning("Unable to add hydrogens", e)
     raise MoleculeLoadException(e)
@@ -83,7 +82,7 @@ def load_molecule(molecule_file, add_hydrogens=True, calc_charges=True):
     raise MoleculeLoadException("Don't support pdbqt files yet")
   elif ".pdb" in molecule_file:
     my_mol = Chem.MolFromPDBFile(
-        str(molecule_file), sanitize=False, removeHs=False)
+      str(molecule_file), sanitize=False, removeHs=False)
   else:
     raise ValueError("Unrecognized file type")
 
@@ -100,13 +99,31 @@ def load_molecule(molecule_file, add_hydrogens=True, calc_charges=True):
   return xyz, my_mol
 
 
+def pdbqt_file_hack(mol, outfile):
+  lines = [x.strip() for x in open(outfile).readlines()]
+  out_lines = []
+  for line in lines:
+    if "ROOT" in line or "ENDROOT" in line or "TORSDOF" in line:
+      out_lines.append("%s\n" % line)
+      continue
+    if not line.startswith("ATOM"):
+      continue
+    line = line[:66]
+    atom_index = int(line.split()[1])
+    atom = mol.GetAtoms()[atom_index]
+    line = "%s    +0.000 %s\n" % (line, atom.GetSymbol().ljust(2))
+    out_lines.append(line)
+  with open(outfile, 'w') as fout:
+    for line in out_lines:
+      fout.write(line)
+
+
 def write_molecule(mol, outfile):
   if ".pdbqt" in outfile:
-    # TODO (LESWING) create writer for pdbqt which includes charges
     writer = Chem.PDBWriter(outfile)
     writer.write(mol)
     writer.close()
-    pass
+    pdbqt_file_hack(mol, outfile)
   elif ".pdb" in outfile:
     writer = Chem.PDBWriter(outfile)
     writer.write(mol)
