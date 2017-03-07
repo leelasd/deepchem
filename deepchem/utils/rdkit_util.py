@@ -36,29 +36,26 @@ def get_xyz_from_mol(mol):
   return (xyz)
 
 
-def add_hydrogens_to_mol(mol):
-  molecule_file = None
-  try:
-    pdbblock = Chem.MolToPDBBlock(mol)
-    pdb_stringio = StringIO()
-    pdb_stringio.write(pdbblock)
-    pdb_stringio.seek(0)
-    fixer = PDBFixer(pdbfile=pdb_stringio)
-    fixer.addMissingHydrogens(7.4)
+def load_pdb(molecule_file, add_hydrogens, calc_charges):
+  mol = Chem.MolFromPDBFile(str(molecule_file), sanitize=False, removeHs=False)
+  if add_hydrogens:
+    mol = add_hydrogens_f(mol)
+  if calc_charges:
+    compute_charges(mol)
+  return mol
 
-    hydrogenated_io = StringIO()
-    PDBFile.writeFile(fixer.topology, fixer.positions, hydrogenated_io)
-    hydrogenated_io.seek(0)
-    return Chem.MolFromPDBBlock(
-        hydrogenated_io.read(), sanitize=False, removeHs=False)
+
+def add_hydrogens_f(mol):
+  molecule_file = str(tempfile.NamedTemporaryFile().name)
+  Chem.MolToPDBFile(mol, molecule_file)
+  try:
+    fixer = PDBFixer(filename=molecule_file)
+    fixer.addMissingHydrogens(7.4)
+    PDBFile.writeFile(fixer.topology, fixer.positions, open(molecule_file, 'w'))
   except ValueError as e:
-    logging.warning("Unable to add hydrogens", e)
+    print(e)
     raise MoleculeLoadException(e)
-  finally:
-    try:
-      os.remove(molecule_file)
-    except (OSError, TypeError):
-      pass
+  return Chem.MolFromPDBFile(str(molecule_file), sanitize=False, removeHs=False)
 
 
 def compute_charges(mol):
@@ -76,29 +73,27 @@ def load_molecule(molecule_file, add_hydrogens=True, calc_charges=True):
   Given molecule_file, returns a tuple of xyz coords of molecule
   and an rdkit object representing that molecule
   """
-  should_sanitize = True
   if ".mol2" in molecule_file or ".sdf" in molecule_file:
     suppl = Chem.SDMolSupplier(str(molecule_file), sanitize=False)
     my_mol = suppl[0]
   elif ".pdbqt" in molecule_file:
     raise MoleculeLoadException("Don't support pdbqt files yet")
   elif ".pdb" in molecule_file:
-    should_sanitize = False
-    my_mol = Chem.MolFromPDBFile(
-        str(molecule_file), sanitize=False, removeHs=False)
+    my_mol = load_pdb(molecule_file, add_hydrogens, calc_charges)
+    xyz = get_xyz_from_mol(my_mol)
+    return xyz, my_mol
   else:
     raise ValueError("Unrecognized file type")
 
   if my_mol is None:
     raise ValueError("Unable to read non None Molecule Object")
 
-  try:
-    if add_hydrogens:
-      my_mol = add_hydrogens_to_mol(my_mol)
-    if calc_charges:
-      compute_charges(my_mol)
-  except Exception as e:
-    print("FOOBARBASHQUANTS %s" % molecule_file)
+  if calc_charges:
+    my_mol = add_hydrogens_f(my_mol)
+    compute_charges(my_mol)
+  elif add_hydrogens:
+    my_mol = add_hydrogens_f(my_mol)
+    compute_charges(my_mol)
 
   xyz = get_xyz_from_mol(my_mol)
 
