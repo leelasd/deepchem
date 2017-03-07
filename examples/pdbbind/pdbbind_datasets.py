@@ -125,10 +125,10 @@ def compute_single_pdbbind_feature(x):
     computed_feature = compute_pdbbind_features(featurizer, pdb_subdir,
                                                 pdb_code)
   except MoleculeLoadException as e:
-    logging.warning("Unable to compute features for %s" % x)
+    logging.warning("Unable to compute features for %s" % str(x))
     return None
   except Exception as e:
-    logging.warning("Unable to compute features for %s" % x)
+    logging.warning("Unable to compute features for %s" % str(x))
     return None
   return ind, computed_feature
 
