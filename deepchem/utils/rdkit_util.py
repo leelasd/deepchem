@@ -240,8 +240,8 @@ def sanitize_mol(m):
       Chem.SanitizeMol(nm)
       return nm
     else:
-      logging.warn("Unable To Sanitize Molecule")
+      logging.warning("Unable To Sanitize Molecule")
       return m
   except ValueError:
-    logging.warn("Unable To Sanitize Molecule")
+    logging.warning("Unable To Sanitize Molecule")
     return m
