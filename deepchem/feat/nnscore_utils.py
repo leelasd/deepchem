@@ -67,10 +67,10 @@ def hydrogenate_and_compute_partial_charges(input_file, input_format,
   mol = rdkit_util.load_molecule(input_file, add_hydrogens=True, calc_charges=True)[1]
   if verbose:
     print("Create pdb with hydrogens added")
-  rdkit_util.write_molecule(mol, str(hyd_output))
+  rdkit_util.write_molecule(mol, str(hyd_output), is_protein=protein)
   if verbose:
     print("Create a pdbqt file from the hydrogenated pdb above.")
-  rdkit_util.write_molecule(mol, str(pdbqt_output))
+  rdkit_util.write_molecule(mol, str(pdbqt_output), is_protein=protein)
 
   if protein:
     print("Removing ROOT/ENDROOT/TORSDOF")
@@ -78,9 +78,7 @@ def hydrogenate_and_compute_partial_charges(input_file, input_format,
       pdbqt_lines = f.readlines()
     filtered_lines = []
     for line in pdbqt_lines:
-      if "ROOT" in line or "ENDROOT" in line or "TORSDOF" in line:
-        continue
-      line.replace("OA","O ")
+
       filtered_lines.append(line)
     with open(pdbqt_output, "w") as f:
       f.writelines(filtered_lines)
