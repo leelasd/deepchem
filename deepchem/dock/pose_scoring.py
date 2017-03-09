@@ -5,6 +5,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import unicode_literals
 
+from deepchem.feat import RdkitGridFeaturizer
+
 __author__ = "Bharath Ramsundar"
 __copyright__ = "Copyright 2016, Stanford University"
 __license__ = "GPL"
@@ -12,7 +14,6 @@ __license__ = "GPL"
 import numpy as np
 import os
 import tempfile
-from deepchem.feat import GridFeaturizer
 from deepchem.data import NumpyDataset
 from subprocess import call
 
@@ -29,7 +30,7 @@ class GridPoseScorer(object):
     """Initializes a pose-scorer."""
     self.model = model
     if feat == "grid":
-      self.featurizer = GridFeaturizer(
+      self.featurizer = RdkitGridFeaturizer(
           voxel_width=16.0, feature_types="voxel_combined",
           # TODO(rbharath, enf): Figure out why pi_stack is slow and cation_pi
           # causes segfaults.

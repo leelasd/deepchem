@@ -11,25 +11,19 @@ __license__ = "GNU General Public License"
 import math
 import os
 import subprocess
-import openbabel
 import numpy as np
+import deepchem.utils.rdkit_util as rdkit_util
 
 
 def force_partial_charge_computation(mol):
   """Force computation of partial charges for molecule.
 
-  This function uses GetPartialCharge to force computation of the Gasteiger
-  partial charges. This is an unfortunate hack, since it looks like the
-  python openbabel API doesn't expose the OBGastChrg object which actually
-  computes partial charges.
-
   Parameters
   ----------
-  mol: OBMol
+  mol: Rdkit Mol
     Molecule on which we compute partial charges.
   """
-  for obatom in openbabel.OBMolAtomIter(mol):
-    obatom.GetPartialCharge()
+  rdkit_util.compute_charges(mol)
 
 def pdbqt_to_pdb(input_file, output_directory):
   """Convert pdbqt file to pdb file.
@@ -41,11 +35,8 @@ def pdbqt_to_pdb(input_file, output_directory):
   output_directory: String
     Path to desired output directory.
   """
-  basename = os.path.basename(input_file).split(".")[0]
-  pdb_output = os.path.join(output_directory, basename + ".pdb")
-  with open(pdb_output, "wb") as outfile:
-    obabel_command = ["obabel", "-ipdbqt", input_file, "-opdb"]
-    subprocess.Popen(obabel_command, stdout=outfile).wait()
+  print(input_file, output_directory)
+  raise ValueError("Not yet implemented")
 
 def hydrogenate_and_compute_partial_charges(input_file, input_format,
                                             hyd_output=None,
@@ -71,40 +62,13 @@ def hydrogenate_and_compute_partial_charges(input_file, input_format,
   input_format: String
     Name of input format.
   """
-  basename = os.path.basename(input_file).split(".")[0]
-  # Since this function passes data to C++ obabel classes, we need to
-  # constantly cast to str to convert unicode to char*
+  mol = rdkit_util.load_molecule(input_file, add_hydrogens=True, calc_charges=True)[1]
   if verbose:
     print("Create pdb with hydrogens added")
-  hyd_conversion = openbabel.OBConversion()
-  hyd_conv = hyd_conversion.SetInAndOutFormats(str(input_format), str("pdb"))
-  mol = openbabel.OBMol()
-  hyd_conversion.ReadFile(mol, str(input_file))
-  # AddHydrogens(not-polaronly, correctForPH, pH)
-  mol.AddHydrogens(False, True, 7.4)
-  hyd_out = hyd_conversion.WriteFile(mol, str(hyd_output))
-
+  rdkit_util.write_molecule(mol, str(hyd_output), is_protein=protein)
   if verbose:
     print("Create a pdbqt file from the hydrogenated pdb above.")
-  charge_conversion = openbabel.OBConversion()
-  charge_conv = charge_conversion.SetInAndOutFormats(str("pdb"), str("pdbqt"))
-
-  if protein:
-    print("Make protein rigid.")
-    charge_conversion.AddOption(str("r"), charge_conversion.OUTOPTIONS)
-    charge_conversion.AddOption(str("c"), charge_conversion.OUTOPTIONS)
-  print("Preserve hydrogens")
-  charge_conversion.AddOption(str("h"), charge_conversion.OUTOPTIONS)
-  print("Preserve atom indices")
-  charge_conversion.AddOption(str("p"), charge_conversion.OUTOPTIONS)
-  print("preserve atom indices.")
-  charge_conversion.AddOption(str("n"), charge_conversion.OUTOPTIONS)
-
-  print("About to run obabel conversion.")
-  mol = openbabel.OBMol()
-  charge_conversion.ReadFile(mol, str(hyd_output))
-  force_partial_charge_computation(mol)
-  charge_conversion.WriteFile(mol, str(pdbqt_output))
+  rdkit_util.write_molecule(mol, str(pdbqt_output), is_protein=protein)
 
   if protein:
     print("Removing ROOT/ENDROOT/TORSDOF")
@@ -112,8 +76,7 @@ def hydrogenate_and_compute_partial_charges(input_file, input_format,
       pdbqt_lines = f.readlines()
     filtered_lines = []
     for line in pdbqt_lines:
-      if "ROOT" in line or "ENDROOT" in line or "TORSDOF" in line:
-        continue
+
       filtered_lines.append(line)
     with open(pdbqt_output, "w") as f:
       f.writelines(filtered_lines)

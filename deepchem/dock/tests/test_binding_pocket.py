@@ -17,6 +17,7 @@ import os
 import shutil
 import numpy as np
 import deepchem as dc
+from deepchem.utils import rdkit_util
 
 class TestBindingPocket(unittest.TestCase):
   """
@@ -32,7 +33,7 @@ class TestBindingPocket(unittest.TestCase):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     protein_file = os.path.join(current_dir, "1jld_protein.pdb")
     ligand_file = os.path.join(current_dir, "1jld_ligand.sdf")
-    coords = dc.feat.grid_featurizer.load_molecule(protein_file)[0]
+    coords = rdkit_util.load_molecule(protein_file)[0]
 
     boxes = dc.dock.binding_pocket.get_all_boxes(coords)
     assert isinstance(boxes, list)
@@ -52,7 +53,7 @@ class TestBindingPocket(unittest.TestCase):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     protein_file = os.path.join(current_dir, "1jld_protein.pdb")
     ligand_file = os.path.join(current_dir, "1jld_ligand.sdf")
-    coords = dc.feat.grid_featurizer.load_molecule(protein_file)[0]
+    coords = rdkit_util.load_molecule(protein_file)[0]
     boxes = dc.dock.binding_pocket.get_all_boxes(coords)
 
     mapping = dc.dock.binding_pocket.boxes_to_atoms(coords, boxes)

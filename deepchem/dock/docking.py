@@ -12,7 +12,6 @@ __license__ = "GPL"
 import numpy as np
 import os
 import tempfile
-from deepchem.feat import GridFeaturizer
 from deepchem.data import DiskDataset
 from deepchem.models import SklearnModel
 from deepchem.models import TensorflowMultiTaskRegressor
