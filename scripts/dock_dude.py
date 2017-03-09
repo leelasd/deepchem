@@ -31,7 +31,6 @@ import glob
 import numpy as np
 import time
 from functools import partial
-from ipyparallel import Client
 
 def prepare_receptors(dude_dir, new_dir):
   for subdir, dirs, files in os.walk(dude_dir):

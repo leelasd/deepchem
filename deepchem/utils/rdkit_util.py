@@ -17,6 +17,7 @@ except ImportError:
 
 
 class MoleculeLoadException(Exception):
+
   def __init__(self, *args, **kwargs):
     Exception.__init__(*args, **kwargs)
 
@@ -50,7 +51,7 @@ def add_hydrogens_to_mol(mol):
     PDBFile.writeFile(fixer.topology, fixer.positions, hydrogenated_io)
     hydrogenated_io.seek(0)
     return Chem.MolFromPDBBlock(
-      hydrogenated_io.read(), sanitize=False, removeHs=False)
+        hydrogenated_io.read(), sanitize=False, removeHs=False)
   except ValueError as e:
     logging.warning("Unable to add hydrogens", e)
     raise MoleculeLoadException(e)
@@ -81,11 +82,10 @@ def load_molecule(molecule_file, add_hydrogens=True, calc_charges=True):
     my_mol = suppl[0]
   elif ".pdbqt" in molecule_file:
     pdb_file = pdbqt_to_pdb(molecule_file)
-    my_mol = Chem.MolFromPDBFile(
-      str(pdb_file), sanitize=False, removeHs=False)
+    my_mol = Chem.MolFromPDBFile(str(pdb_file), sanitize=False, removeHs=False)
   elif ".pdb" in molecule_file:
     my_mol = Chem.MolFromPDBFile(
-      str(molecule_file), sanitize=False, removeHs=False)
+        str(molecule_file), sanitize=False, removeHs=False)
   else:
     raise ValueError("Unrecognized file type")
 
@@ -151,6 +151,7 @@ def pdbqt_to_pdb(filename):
       fout.write("%s\n" % line[:66])
   return pdb_filename
 
+
 def merge_molecules_xyz(protein_xyz, ligand_xyz):
   """Merges coordinates of protein and ligand.
   """
@@ -158,6 +159,7 @@ def merge_molecules_xyz(protein_xyz, ligand_xyz):
 
 
 class PdbqtLigandWriter(object):
+
   def __init__(self, mol, outfile):
     self.mol = mol
     self.outfile = outfile
@@ -233,7 +235,8 @@ class PdbqtLigandWriter(object):
 
   def _create_pdb_map(self):
     lines = [x.strip() for x in open(self.outfile).readlines()]
-    lines = filter(lambda x: x.startswith("HETATM") or x.startswith("ATOM"), lines)
+    lines = filter(lambda x: x.startswith("HETATM") or x.startswith("ATOM"),
+                   lines)
     lines = [x[:66] for x in lines]
     pdb_map = {}
     for line in lines:
@@ -257,11 +260,12 @@ class PdbqtLigandWriter(object):
     self.graph = G
 
   def _get_rotatable_bonds(self):
-    pattern = Chem.MolFromSmarts("[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
-                                 "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
-                                 "[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-!@[!$(*#"
-                                 "*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])"
-                                 "[CH3])]")
+    pattern = Chem.MolFromSmarts(
+        "[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
+        "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
+        "[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-!@[!$(*#"
+        "*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])"
+        "[CH3])]")
     from rdkit.Chem import rdmolops
     rdmolops.FastFindRings(self.mol)
     self.rotatable_bonds = self.mol.GetSubstructMatches(pattern)

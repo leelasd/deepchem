@@ -14,18 +14,25 @@ import mdtraj as md
 from deepchem.utils.save import log
 from deepchem.feat import Featurizer
 
+
 class BindingPocketFeaturizer(Featurizer):
   """
   Featurizes binding pockets with information about chemical environments.
   """
 
-  residues = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS",
-              "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "PYL", "SER", "SEC",
-              "THR", "TRP", "TYR", "VAL", "ASX", "GLX"]
+  residues = [
+      "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
+      "LEU", "LYS", "MET", "PHE", "PRO", "PYL", "SER", "SEC", "THR", "TRP",
+      "TYR", "VAL", "ASX", "GLX"
+  ]
 
   n_features = len(residues)
 
-  def featurize(self, protein_file, pockets, pocket_atoms_map, pocket_coords,
+  def featurize(self,
+                protein_file,
+                pockets,
+                pocket_atoms_map,
+                pocket_coords,
                 verbose=False):
     """
     Calculate atomic coodinates.
@@ -34,7 +41,7 @@ class BindingPocketFeaturizer(Featurizer):
     n_pockets = len(pockets)
     n_residues = len(BindingPocketFeaturizer.residues)
     res_map = dict(zip(BindingPocketFeaturizer.residues, range(n_residues)))
-    all_features = np.zeros((n_pockets, n_residues)) 
+    all_features = np.zeros((n_pockets, n_residues))
     for pocket_num, (pocket, coords) in enumerate(zip(pockets, pocket_coords)):
       pocket_atoms = pocket_atoms_map[pocket]
       for ind, atom in enumerate(pocket_atoms):
@@ -47,4 +54,4 @@ class BindingPocketFeaturizer(Featurizer):
           continue
         atomtype = atom_name.split("-")[1]
         all_features[pocket_num, res_map[residue]] += 1
-    return all_features 
+    return all_features
