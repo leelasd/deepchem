@@ -233,6 +233,7 @@ class PdbqtLigandWriter(object):
       my_values = line.split()
       atom_number = int(my_values[1])
       atom_symbol = my_values[2]
+      atom_symbol = ''.join([i for i in atom_symbol if not i.isdigit()])
       line = line.replace("HETATM", "ATOM  ")
       line = "%s    +0.000 %s\n" % (line, atom_symbol.ljust(2))
       pdb_map[atom_number - 1] = line

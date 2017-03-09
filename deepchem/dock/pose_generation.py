@@ -132,9 +132,6 @@ class VinaPoseGenerator(PoseGenerator):
                                             hyd_output=ligand_hyd,
                                             pdbqt_output=ligand_pdbqt,
                                             protein=False)
-    import shutil
-    shutil.copy("/tmp/tmp.pdbqt", ligand_pdbqt)
-
     # Write Vina conf file
     conf_file = os.path.join(out_dir, "conf.txt")
     write_conf(protein_pdbqt, ligand_pdbqt, protein_centroid,
