@@ -11,7 +11,6 @@ __license__ = "GPL"
 
 import numpy as np
 import os
-import pybel
 import tempfile
 import mdtraj as md
 from deepchem.utils.save import log

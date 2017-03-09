@@ -11,11 +11,11 @@ __license__ = "GPL"
 
 import numpy as np
 import os
-import pybel
 import tempfile
 from subprocess import call
 from deepchem.feat import hydrogenate_and_compute_partial_charges
 from deepchem.dock.binding_pocket import RFConvexHullPocketFinder
+from deepchem.utils import rdkit_util
 
 class PoseGenerator(object):
   """Abstract superclass for all pose-generation routines."""
@@ -42,16 +42,11 @@ def write_conf(receptor_filename, ligand_filename, centroid, box_dims,
     if exhaustiveness is not None:
       f.write("exhaustiveness = %d\n" % exhaustiveness)
 
-def get_molecule_data(pybel_molecule):
-  """Uses pybel to compute centroid and range of molecule (Angstroms)."""
-  atom_positions = []
-  for atom in pybel_molecule:
-    atom_positions.append(atom.coords)
-  num_atoms = len(atom_positions)
-  protein_xyz = np.asarray(atom_positions)
-  protein_centroid = np.mean(protein_xyz, axis=0)
-  protein_max = np.max(protein_xyz, axis=0)
-  protein_min = np.min(protein_xyz, axis=0)
+def get_molecule_data(molecule_xyz):
+  """Uses compute centroid and range of 3D coordinents"""
+  protein_centroid = np.mean(molecule_xyz, axis=0)
+  protein_max = np.max(molecule_xyz, axis=0)
+  protein_min = np.min(molecule_xyz, axis=0)
   protein_range = protein_max - protein_min
   return protein_centroid, protein_range
 
@@ -101,14 +96,14 @@ class VinaPoseGenerator(PoseGenerator):
                                             pdbqt_output=protein_pdbqt,
                                             protein=True)
     # Get protein centroid and range
-    receptor_pybel = next(pybel.readfile(str("pdb"), str(protein_hyd)))
     # TODO(rbharath): Need to add some way to identify binding pocket, or this is
     # going to be extremely slow!
     if centroid is not None and box_dims is not None:
       protein_centroid = centroid
     else:
       if not self.detect_pockets:
-        protein_centroid, protein_range = get_molecule_data(receptor_pybel)
+        receptor_mol = rdkit_util.load_molecule(protein_hyd, calc_charges=False, add_hydrogens=False)
+        protein_centroid, protein_range = get_molecule_data(receptor_mol[0])
         box_dims = protein_range + 5.0
       else:
         print("About to find putative binding pockets")

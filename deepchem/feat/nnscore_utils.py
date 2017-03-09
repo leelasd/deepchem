@@ -11,7 +11,6 @@ __license__ = "GNU General Public License"
 import math
 import os
 import subprocess
-import openbabel
 import numpy as np
 import deepchem.utils.rdkit_util as rdkit_util
 
@@ -63,7 +62,6 @@ def hydrogenate_and_compute_partial_charges(input_file, input_format,
   input_format: String
     Name of input format.
   """
-  basename = os.path.basename(input_file).split(".")[0]
   mol = rdkit_util.load_molecule(input_file, add_hydrogens=True, calc_charges=True)[1]
   if verbose:
     print("Create pdb with hydrogens added")
