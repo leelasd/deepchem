@@ -1,13 +1,13 @@
 import logging
 
-import os
-import numpy as np
-import tempfile
-import shutil
-from rdkit import Chem
 import networkx as nx
-from rdkit.Chem import AllChem
+import numpy as np
+import os
+
 from pdbfixer import PDBFixer
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem import rdmolops
 from simtk.openmm.app import PDBFile
 
 try:
@@ -84,7 +84,8 @@ def load_molecule(molecule_file, add_hydrogens=True, calc_charges=True):
     my_mol = suppl[0]
   elif ".pdbqt" in molecule_file:
     pdb_block = pdbqt_to_pdb(molecule_file)
-    my_mol = Chem.MolFromPDBBlock(str(pdb_block), sanitize=False, removeHs=False)
+    my_mol = Chem.MolFromPDBBlock(
+        str(pdb_block), sanitize=False, removeHs=False)
   elif ".pdb" in molecule_file:
     my_mol = Chem.MolFromPDBFile(
         str(molecule_file), sanitize=False, removeHs=False)
@@ -163,6 +164,9 @@ def merge_molecules_xyz(protein_xyz, ligand_xyz):
 
 
 class PdbqtLigandWriter(object):
+  """
+  Create a torsion tree and write to pdbqt file
+  """
 
   def __init__(self, mol, outfile):
     self.mol = mol
@@ -270,6 +274,5 @@ class PdbqtLigandWriter(object):
         "[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-!@[!$(*#"
         "*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])"
         "[CH3])]")
-    from rdkit.Chem import rdmolops
     rdmolops.FastFindRings(self.mol)
     self.rotatable_bonds = self.mol.GetSubstructMatches(pattern)
