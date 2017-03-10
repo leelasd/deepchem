@@ -77,12 +77,14 @@ def load_molecule(molecule_file, add_hydrogens=True, calc_charges=True):
   Given molecule_file, returns a tuple of xyz coords of molecule
   and an rdkit object representing that molecule
   """
-  if ".mol2" in molecule_file or ".sdf" in molecule_file:
+  if ".mol2" in molecule_file:
+    my_mol = Chem.MolFromMol2File(molecule_file)
+  elif ".sdf" in molecule_file:
     suppl = Chem.SDMolSupplier(str(molecule_file), sanitize=False)
     my_mol = suppl[0]
   elif ".pdbqt" in molecule_file:
-    pdb_file = pdbqt_to_pdb(molecule_file)
-    my_mol = Chem.MolFromPDBFile(str(pdb_file), sanitize=False, removeHs=False)
+    pdb_block = pdbqt_to_pdb(molecule_file)
+    my_mol = Chem.MolFromPDBBlock(str(pdb_block), sanitize=False, removeHs=False)
   elif ".pdb" in molecule_file:
     my_mol = Chem.MolFromPDBFile(
         str(molecule_file), sanitize=False, removeHs=False)
@@ -138,18 +140,20 @@ def write_molecule(mol, outfile, is_protein=False):
     writer = Chem.PDBWriter(outfile)
     writer.write(mol)
     writer.close()
+  elif ".sdf" in outfile:
+    writer = Chem.SDWriter(outfile)
+    writer.write(mol)
+    writer.close()
   else:
     raise ValueError("Unsupported Format")
 
 
 def pdbqt_to_pdb(filename):
-  base_filename = os.path.splitext(filename)[0]
-  pdb_filename = base_filename + ".pdb"
   pdbqt_data = open(filename).readlines()
-  with open(pdb_filename, 'w') as fout:
-    for line in pdbqt_data:
-      fout.write("%s\n" % line[:66])
-  return pdb_filename
+  pdb_block = ""
+  for line in pdbqt_data:
+    pdb_block += "%s\n" % line[:66]
+  return pdb_block
 
 
 def merge_molecules_xyz(protein_xyz, ligand_xyz):
