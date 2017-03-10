@@ -38,8 +38,10 @@ class AtomicCoordinates(Featurizer):
     # RDKit stores atomic coordinates in Angstrom. Atomic unit of length is the
     # bohr (1 bohr = 0.529177 Angstrom). Converting units makes gradient calculation
     # consistent with most QM software packages.
-    coords_in_bohr = [mol.GetConformer(0).GetAtomPosition(i).__idiv__(0.52917721092)
-                      for i in range(N)]
+    coords_in_bohr = [
+        mol.GetConformer(0).GetAtomPosition(i).__idiv__(0.52917721092)
+        for i in range(N)
+    ]
 
     for atom in range(N):
       coords[atom, 0] = coords_in_bohr[atom].x
@@ -50,15 +52,17 @@ class AtomicCoordinates(Featurizer):
     return coords
 
 
-def compute_neighbor_list(coords, neighbor_cutoff, max_num_neighbors, periodic_box_size):
+def compute_neighbor_list(coords, neighbor_cutoff, max_num_neighbors,
+                          periodic_box_size):
   """Computes a neighbor list from atom coordinates."""
   N = coords.shape[0]
   traj = mdtraj.Trajectory(coords.reshape((1, N, 3)), None)
   box_size = None
   if periodic_box_size is not None:
     box_size = np.array(periodic_box_size)
-    traj.unitcell_vectors = np.array([[[box_size[0], 0, 0], [0, box_size[1], 0], [0, 0, box_size[2]]]],
-                                     dtype=np.float32)
+    traj.unitcell_vectors = np.array(
+        [[[box_size[0], 0, 0], [0, box_size[1], 0], [0, 0, box_size[2]]]],
+        dtype=np.float32)
   neighbors = mdtraj.geometry.compute_neighborlist(traj, neighbor_cutoff)
   neighbor_list = {}
   for i in range(N):
@@ -69,7 +73,8 @@ def compute_neighbor_list(coords, neighbor_cutoff, max_num_neighbors, periodic_b
       dist = np.linalg.norm(delta, axis=1)
       sorted_neighbors = list(zip(dist, neighbors[i]))
       sorted_neighbors.sort()
-      neighbor_list[i] = [sorted_neighbors[j][1] for j in range(max_num_neighbors)]
+      neighbor_list[
+          i] = [sorted_neighbors[j][1] for j in range(max_num_neighbors)]
     else:
       neighbor_list[i] = list(neighbors[i])
   return neighbor_list
@@ -107,7 +112,10 @@ class NeighborListAtomicCoordinates(Featurizer):
     Dimensions of the periodic box in Angstroms, or None to not use periodic boundary conditions
   """
 
-  def __init__(self, max_num_neighbors=None, neighbor_cutoff=4, periodic_box_size=None):
+  def __init__(self,
+               max_num_neighbors=None,
+               neighbor_cutoff=4,
+               periodic_box_size=None):
     if neighbor_cutoff <= 0:
       raise ValueError("neighbor_cutoff must be positive value.")
     if max_num_neighbors is not None:
@@ -133,7 +141,9 @@ class NeighborListAtomicCoordinates(Featurizer):
     # TODO(rbharath): Should this return a list?
     bohr_coords = self.coordinates_featurizer._featurize(mol)[0]
     coords = get_coords(mol)
-    neighbor_list = compute_neighbor_list(coords, self.neighbor_cutoff, self.max_num_neighbors, self.periodic_box_size)
+    neighbor_list = compute_neighbor_list(coords, self.neighbor_cutoff,
+                                          self.max_num_neighbors,
+                                          self.periodic_box_size)
     return (bohr_coords, neighbor_list)
 
 
@@ -172,6 +182,6 @@ class NeighborListComplexAtomicCoordinates(ComplexFeaturizer):
     system_coords = rdkit_util.merge_molecules_xyz(mol_coords, protein_coords)
 
     system_neighbor_list = compute_neighbor_list(
-      system_coords, self.neighbor_cutoff, self.max_num_neighbors, None)
+        system_coords, self.neighbor_cutoff, self.max_num_neighbors, None)
 
     return (system_coords, system_neighbor_list)

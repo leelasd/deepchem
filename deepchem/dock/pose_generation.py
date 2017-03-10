@@ -95,11 +95,11 @@ class VinaPoseGenerator(PoseGenerator):
     protein_hyd = os.path.join(out_dir, "%s.pdb" % receptor_name)
     protein_pdbqt = os.path.join(out_dir, "%s.pdbqt" % receptor_name)
     hydrogenate_and_compute_partial_charges(
-      protein_file,
-      "pdb",
-      hyd_output=protein_hyd,
-      pdbqt_output=protein_pdbqt,
-      protein=True)
+        protein_file,
+        "pdb",
+        hyd_output=protein_hyd,
+        pdbqt_output=protein_pdbqt,
+        protein=True)
     # Get protein centroid and range
     # TODO(rbharath): Need to add some way to identify binding pocket, or this is
     # going to be extremely slow!
@@ -108,14 +108,14 @@ class VinaPoseGenerator(PoseGenerator):
     else:
       if not self.detect_pockets:
         receptor_mol = rdkit_util.load_molecule(
-          protein_hyd, calc_charges=False, add_hydrogens=False)
+            protein_hyd, calc_charges=False, add_hydrogens=False)
         protein_centroid = mol_xyz_util.get_molecule_centroid(receptor_mol[0])
         protein_range = mol_xyz_util.get_molecule_range(receptor_mol[0])
         box_dims = protein_range + 5.0
       else:
         print("About to find putative binding pockets")
         pockets, pocket_atoms_maps, pocket_coords = self.pocket_finder.find_pockets(
-          protein_file, ligand_file)
+            protein_file, ligand_file)
         # TODO(rbharath): Handle multiple pockets instead of arbitrarily selecting
         # first pocket. 
         print("Computing centroid and size of proposed pocket.")
@@ -135,20 +135,20 @@ class VinaPoseGenerator(PoseGenerator):
 
     # TODO(rbharath): Generalize this so can support mol2 files as well.
     hydrogenate_and_compute_partial_charges(
-      ligand_file,
-      "sdf",
-      hyd_output=ligand_hyd,
-      pdbqt_output=ligand_pdbqt,
-      protein=False)
+        ligand_file,
+        "sdf",
+        hyd_output=ligand_hyd,
+        pdbqt_output=ligand_pdbqt,
+        protein=False)
     # Write Vina conf file
     conf_file = os.path.join(out_dir, "conf.txt")
     write_conf(
-      protein_pdbqt,
-      ligand_pdbqt,
-      protein_centroid,
-      box_dims,
-      conf_file,
-      exhaustiveness=self.exhaustiveness)
+        protein_pdbqt,
+        ligand_pdbqt,
+        protein_centroid,
+        box_dims,
+        conf_file,
+        exhaustiveness=self.exhaustiveness)
 
     # Define locations of log and output files
     log_file = os.path.join(out_dir, "%s_log.txt" % ligand_name)
@@ -157,9 +157,9 @@ class VinaPoseGenerator(PoseGenerator):
     if not dry_run:
       print("About to call Vina")
       call(
-        "%s --config %s --log %s --out %s" %
-        (self.vina_cmd, conf_file, log_file, out_pdbqt),
-        shell=True)
+          "%s --config %s --log %s --out %s" %
+          (self.vina_cmd, conf_file, log_file, out_pdbqt),
+          shell=True)
     # TODO(rbharath): Convert the output pdbqt to a pdb file.
 
     # Return docked files 
