@@ -2,12 +2,14 @@
 TODO(LESWING) Remove h5py dependency
 TODO(LESWING) Remove keras dependency and replace with functional keras API
 """
-
+import deepchem as dc
 from deepchem.models import Model
 from deepchem.models.autoencoder_models.model import MoleculeVAE
 from deepchem.feat.one_hot import zinc_charset
 import os
 from subprocess import call
+
+from models import Sequential
 
 
 class TensorflowMoleculeEncoder(Model):
@@ -142,3 +144,39 @@ class TensorflowMoleculeDecoder(Model):
   def predict_on_batch(self, X):
     x_latent = self.model.decoder.predict(X)
     return x_latent
+
+
+class TensorflowSequentialMoleculeEncoder(Sequential):
+  """
+  Transform molecules from one hot encoding into a latent vector
+  representation.
+  https://arxiv.org/abs/1610.02415
+  """
+
+  def __init__(self,
+               model_dir=None,
+               weights_file="model.h5",
+               verbose=True,
+               charset_length=len(zinc_charset),
+               latent_rep_size=292):
+    """
+
+    Parameters
+    ----------
+    model_dir: str
+      Folder to store cached weights
+    weights_file: str
+      File to store cached weights in model_dir
+    verbose: bool
+      True for more logging
+    charset_length: int
+      Length of one_hot_encoded vectors
+    latent_rep_size: int
+      How large a 1D Vector for latent representation
+    """
+    super(TensorflowSequentialMoleculeEncoder, self).__init__(logdir=model_dir)
+    self.add_features(dc.nn.Input(shape=(charset_length,)))
+    self.add_features(dc.nn.Dense())
+
+if __name__ == "__main__":
+  m = TensorflowSequentialMoleculeEncoder(charset_length=128)
