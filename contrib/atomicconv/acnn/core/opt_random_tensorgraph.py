@@ -204,7 +204,7 @@ class AtomicConvScore2(Layer):
     complex_energy = tf.reduce_sum(complex_outputs, 1)
     binding_energy = complex_energy - (frag1_energy + frag2_energy)
     print(binding_energy.get_shape())
-    self.out_tensor = binding_energy
+    self.out_tensor = tf.expand_dims(binding_energy, axis=0)
     return self.out_tensor
 
 
