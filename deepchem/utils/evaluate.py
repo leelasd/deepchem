@@ -215,7 +215,7 @@ class GeneratorEvaluator(object):
           y, newshape=(y.shape[0] * y.shape[1], y.shape[2], y.shape[3]))
       y = from_one_hot(y, axis=-1)
     else:
-      y_pred = self.model.predict_on_generator(generator_closure())
+      y_pred = self.model.predict_proba_on_generator(generator_closure())
       y = np.transpose(np.array(y), axes=[0, 2, 1, 3])
       print(y.shape)
       y = np.reshape(
