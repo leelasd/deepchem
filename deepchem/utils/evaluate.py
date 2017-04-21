@@ -217,8 +217,11 @@ class GeneratorEvaluator(object):
     else:
       y_pred = self.model.predict_on_generator(generator_closure())
       y = np.transpose(np.array(y), axes=[0, 2, 1, 3])
+      print(y.shape)
       y = np.reshape(
           y, newshape=(y.shape[0] * y.shape[1], y.shape[2], y.shape[3]))
+      print(y.shape)
+      print(y_pred.shape)
       y_pred = np.squeeze(y_pred, axis=-1)
     if len(w) != 0:
       w = np.reshape(w, newshape=y.shape)
