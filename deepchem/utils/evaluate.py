@@ -221,7 +221,9 @@ class GeneratorEvaluator(object):
       y = np.reshape(
           y, newshape=(y.shape[0] * y.shape[1], y.shape[2], y.shape[3]))
       print(y.shape)
+      print(y[:5])
       print(y_pred.shape)
+      print(y_pred[:5])
       y_pred = np.squeeze(y_pred, axis=-1)
     if len(w) != 0:
       w = np.reshape(w, newshape=y.shape)
