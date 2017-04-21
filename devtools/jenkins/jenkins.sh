@@ -4,14 +4,8 @@ bash scripts/install_deepchem_conda.sh $envname
 source activate $envname
 python setup.py install
 
-rm examples/results.csv || true
-cd examples
-python benchmark.py -d tox21
-export retval1=$?
-
-cd ..
-nosetests -v devtools/jenkins/compare_results.py --with-xunit || true
-export retval2=$?
+cd contrib/atomicconv/acnn/core
+python opt_random_tensorgraph.py
 
 source deactivate
 conda remove --name $envname --all

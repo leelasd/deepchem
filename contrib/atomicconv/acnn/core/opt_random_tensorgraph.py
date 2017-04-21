@@ -22,8 +22,47 @@ import itertools
 import time
 
 
-class AtomicConvScore(Layer):
+def InitializeWeightsBiases(prev_layer_size,
+                            size,
+                            weights=None,
+                            biases=None,
+                            name=None):
+  """Initializes weights and biases to be used in a fully-connected layer.
 
+  Parameters
+  ----------
+  prev_layer_size: int
+    Number of features in previous layer.
+  size: int 
+    Number of nodes in this layer.
+  weights: tf.Tensor, optional (Default None)
+    Weight tensor.
+  biases: tf.Tensor, optional (Default None)
+    Bias tensor.
+  name: str 
+    Name for this op, optional (Defaults to 'fully_connected' if None)
+
+  Returns
+  -------
+  weights: tf.Variable
+    Initialized weights.
+  biases: tf.Variable
+    Initialized biases.
+
+  """
+
+  if weights is None:
+    weights = tf.truncated_normal([prev_layer_size, size], stddev=0.01)
+  if biases is None:
+    biases = tf.zeros([size])
+
+  with tf.name_scope(name, 'fully_connected', [weights, biases]):
+    w = tf.Variable(weights, name='w')
+    b = tf.Variable(biases, name='b')
+  return w, b
+
+
+class AtomicConvScore(Layer):
   def __init__(self, atom_types, **kwargs):
     self.atom_types = atom_types
     super(AtomicConvScore, self).__init__(**kwargs)
@@ -55,7 +94,7 @@ class AtomicConvScore(Layer):
       frag2_atomtype_energy.append(tf.where(cond, frag2_outputs, frag2_zeros))
       cond = tf.equal(complex_z, atomtype)
       complex_atomtype_energy.append(
-          tf.where(cond, complex_outputs, complex_zeros))
+        tf.where(cond, complex_outputs, complex_zeros))
 
     frag1_outputs = tf.add_n(frag1_atomtype_energy)
     frag2_outputs = tf.add_n(frag2_atomtype_energy)
@@ -66,6 +105,105 @@ class AtomicConvScore(Layer):
     complex_energy = tf.reduce_sum(complex_outputs, 1)
     binding_energy = complex_energy - (frag1_energy + frag2_energy)
     self.out_tensor = tf.expand_dims(binding_energy, axis=1)
+    return self.out_tensor
+
+
+class AtomicConvScore2(Layer):
+  def __init__(self, atom_types, layer_sizes, weight_init_stddevs,
+               bias_init_consts, **kwargs):
+    self.atom_types = atom_types
+    self.layer_sizes = layer_sizes
+    self.weight_init_stddevs = weight_init_stddevs
+    self.bias_init_consts = bias_init_consts
+    super(AtomicConvScore2, self).__init__(**kwargs)
+
+  def _create_tensor(self):
+    frag1_layer = self.in_layers[0].out_tensor
+    frag2_layer = self.in_layers[1].out_tensor
+    complex_layer = self.in_layers[2].out_tensor
+
+    frag1_z = self.in_layers[3].out_tensor
+    frag2_z = self.in_layers[4].out_tensor
+    complex_z = self.in_layers[5].out_tensor
+
+    atom_types = self.atom_types
+    layer_sizes = self.layer_sizes
+    num_layers = len(layer_sizes)
+    weight_init_stddevs = self.weight_init_stddevs
+    bias_init_consts = self.bias_init_consts
+
+    weights = []
+    biases = []
+    output_weights = []
+    output_biases = []
+
+    n_features = int(frag1_layer.get_shape()[-1])
+
+    for ind, atomtype in enumerate(atom_types):
+
+      prev_layer_size = n_features
+      weights.append([])
+      biases.append([])
+      output_weights.append([])
+      output_biases.append([])
+      for i in range(num_layers):
+        weight, bias = InitializeWeightsBiases(
+          prev_layer_size=prev_layer_size,
+          size=layer_sizes[i],
+          weights=tf.truncated_normal(
+            shape=[prev_layer_size, layer_sizes[i]],
+            stddev=weight_init_stddevs[i]),
+          biases=tf.constant(
+            value=bias_init_consts[i], shape=[layer_sizes[i]]))
+        weights[ind].append(weight)
+        biases[ind].append(bias)
+        prev_layer_size = layer_sizes[i]
+      weight, bias = InitializeWeightsBiases(prev_layer_size, 1)
+      output_weights[ind].append(weight)
+      output_biases[ind].append(bias)
+
+    def atomnet(current_input, atomtype):
+      prev_layer = current_input
+      for i in range(num_layers):
+        layer = tf.nn.xw_plus_b(prev_layer, weights[atomtype][i], biases[atomtype][i])
+        layer = tf.nn.relu(layer)
+        prev_layer = layer
+
+      output_layer = tf.squeeze(
+        tf.nn.xw_plus_b(prev_layer, output_weights[atomtype][0], output_biases[atomtype][0])
+      )
+      return output_layer
+
+    frag1_zeros = tf.zeros_like(frag1_z)
+    frag2_zeros = tf.zeros_like(frag2_z)
+    complex_zeros = tf.zeros_like(complex_z)
+
+    frag1_atomtype_energy = []
+    frag2_atomtype_energy = []
+    complex_atomtype_energy = []
+
+    for ind, atomtype in enumerate(atom_types):
+      frag1_outputs = tf.map_fn(lambda x: atomnet(x, ind), frag1_layer)
+      frag2_outputs = tf.map_fn(lambda x: atomnet(x, ind), frag2_layer)
+      complex_outputs = tf.map_fn(lambda x: atomnet(x, ind), complex_layer)
+
+      cond = tf.equal(frag1_z, atomtype)
+      frag1_atomtype_energy.append(tf.where(cond, frag1_outputs, frag1_zeros))
+      cond = tf.equal(frag2_z, atomtype)
+      frag2_atomtype_energy.append(tf.where(cond, frag2_outputs, frag2_zeros))
+      cond = tf.equal(complex_z, atomtype)
+      complex_atomtype_energy.append(
+        tf.where(cond, complex_outputs, complex_zeros))
+
+    frag1_outputs = tf.add_n(frag1_atomtype_energy)
+    frag2_outputs = tf.add_n(frag2_atomtype_energy)
+    complex_outputs = tf.add_n(complex_atomtype_energy)
+
+    frag1_energy = tf.reduce_sum(frag1_outputs, 1)
+    frag2_energy = tf.reduce_sum(frag2_outputs, 1)
+    complex_energy = tf.reduce_sum(complex_outputs, 1)
+    binding_energy = complex_energy - (frag1_energy + frag2_energy)
+    self.out_tensor = binding_energy
     return self.out_tensor
 
 
@@ -90,36 +228,41 @@ train_dataset = dc.data.DiskDataset(train_dir)
 test_dataset = dc.data.DiskDataset(test_dir)
 pdbbind_tasks = ["-logKd/Ki"]
 transformers = []
-#transformers = [dc.trans.NormalizationTransformer(transform_y=True, dataset=train_dataset)]
-#for transformer in transformers:
+# transformers = [dc.trans.NormalizationTransformer(transform_y=True, dataset=train_dataset)]
+# for transformer in transformers:
 #  train_dataset = transformer.transform(train_dataset)
 #  test_dataset = transformer.transform(test_dataset)
 
 y_train = train_dataset.y
 y_train *= -1 * 2.479 / 4.184
 train_dataset = dc.data.DiskDataset.from_numpy(
-    train_dataset.X,
-    y_train,
-    train_dataset.w,
-    train_dataset.ids,
-    tasks=pdbbind_tasks)
+  train_dataset.X,
+  y_train,
+  train_dataset.w,
+  train_dataset.ids,
+  tasks=pdbbind_tasks)
 
 y_test = test_dataset.y
 y_test *= -1 * 2.479 / 4.184
 test_dataset = dc.data.DiskDataset.from_numpy(
-    test_dataset.X,
-    y_test,
-    test_dataset.w,
-    test_dataset.ids,
-    tasks=pdbbind_tasks)
+  test_dataset.X,
+  y_test,
+  test_dataset.w,
+  test_dataset.ids,
+  tasks=pdbbind_tasks)
 
 at = [6, 7., 8., 9., 11., 12., 15., 16., 17., 20., 25., 30., 35., 53.]
 radial = [[
-    1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
-    9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0
+  1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
+  9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0
 ], [0.0, 4.0, 8.0], [0.4]]
 rp = [x for x in itertools.product(*radial)]
 layer_sizes = [32, 32, 16]
+weight_init_stddevs = [
+    1 / np.sqrt(layer_sizes[0]), 1 / np.sqrt(layer_sizes[1]),
+    1 / np.sqrt(layer_sizes[2])
+]
+bias_init_consts=[0., 0., 0.]
 dropouts = [0., 0., 0.]
 penalty = 0.
 
@@ -140,49 +283,52 @@ complex_nbrs_z = Feature(shape=(batch_size, complex_num_atoms,
 complex_z = Feature(shape=(batch_size, complex_num_atoms))
 
 frag1_conv = AtomicConvolution(
-    atom_types=at,
-    radial_params=rp,
-    boxsize=None,
-    in_layers=[frag1_X, frag1_nbrs, frag1_nbrs_z])
+  atom_types=at,
+  radial_params=rp,
+  boxsize=None,
+  in_layers=[frag1_X, frag1_nbrs, frag1_nbrs_z])
 
 frag2_conv = AtomicConvolution(
-    atom_types=at,
-    radial_params=rp,
-    boxsize=None,
-    in_layers=[frag2_X, frag2_nbrs, frag2_nbrs_z])
+  atom_types=at,
+  radial_params=rp,
+  boxsize=None,
+  in_layers=[frag2_X, frag2_nbrs, frag2_nbrs_z])
 
 complex_conv = AtomicConvolution(
-    atom_types=at,
-    radial_params=rp,
-    boxsize=None,
-    in_layers=[complex_X, complex_nbrs, complex_nbrs_z])
+  atom_types=at,
+  radial_params=rp,
+  boxsize=None,
+  in_layers=[complex_X, complex_nbrs, complex_nbrs_z])
 
-score_in_layers = []
-for atom_type in at:
-  at_frag1_conv = frag1_conv
-  at_frag2_conv = frag2_conv
-  at_complex_conv = complex_conv
-  for layer_size in layer_sizes:
-    at_frag1_conv = Dense(
-        out_channels=layer_size,
-        activation_fn=tf.nn.relu,
-        time_series=True,
-        in_layers=[at_frag1_conv])
-    at_frag2_conv = at_frag1_conv.shared(in_layers=[at_frag2_conv])
-    at_complex_conv = at_frag1_conv.shared(in_layers=[at_complex_conv])
-  at_frag1_conv = Dense(
-      out_channels=1,
-      activation_fn=None,
-      time_series=True,
-      in_layers=[at_frag1_conv])
-  at_frag2_conv = at_frag1_conv.shared(in_layers=[at_frag2_conv])
-  at_complex_conv = at_frag1_conv.shared(in_layers=[at_complex_conv])
-  score_in_layers.append(at_frag1_conv)
-  score_in_layers.append(at_frag2_conv)
-  score_in_layers.append(at_complex_conv)
-
-score_in_layers.extend([frag1_z, frag2_z, complex_z])
-score = AtomicConvScore(atom_types=at, in_layers=score_in_layers)
+# score_in_layers = []
+# for atom_type in at:
+#   at_frag1_conv = frag1_conv
+#   at_frag2_conv = frag2_conv
+#   at_complex_conv = complex_conv
+#   for layer_size in layer_sizes:
+#     at_frag1_conv = Dense(
+#       out_channels=layer_size,
+#       activation_fn=tf.nn.relu,
+#       time_series=True,
+#       in_layers=[at_frag1_conv])
+#     at_frag2_conv = at_frag1_conv.shared(in_layers=[at_frag2_conv])
+#     at_complex_conv = at_frag1_conv.shared(in_layers=[at_complex_conv])
+#   at_frag1_conv = Dense(
+#     out_channels=1,
+#     activation_fn=None,
+#     time_series=True,
+#     in_layers=[at_frag1_conv])
+#   at_frag2_conv = at_frag1_conv.shared(in_layers=[at_frag2_conv])
+#   at_complex_conv = at_frag1_conv.shared(in_layers=[at_complex_conv])
+#   score_in_layers.append(at_frag1_conv)
+#   score_in_layers.append(at_frag2_conv)
+#   score_in_layers.append(at_complex_conv)
+#
+# score_in_layers.extend([frag1_z, frag2_z, complex_z])
+# score = AtomicConvScore(atom_types=at, in_layers=score_in_layers)
+score = AtomicConvScore2(at, layer_sizes, weight_init_stddevs, bias_init_consts,
+                         in_layers=[frag1_conv, frag2_conv, complex_conv, frag1_z,
+                                    frag2_z, complex_z])
 
 label = Label(shape=(None, 1))
 loss = L2LossLayer(in_layers=[score, label])
@@ -191,7 +337,7 @@ loss = L2LossLayer(in_layers=[score, label])
 def feed_dict_generator(dataset, batch_size, epochs=1):
   for epoch in range(epochs):
     for ind, (F_b, y_b, w_b, ids_b) in enumerate(
-        dataset.iterbatches(batch_size, deterministic=True, pad_batches=True)):
+      dataset.iterbatches(batch_size, deterministic=True, pad_batches=True)):
       N = complex_num_atoms
       N_1 = frag1_num_atoms
       N_2 = frag2_num_atoms
@@ -265,26 +411,26 @@ def feed_dict_generator(dataset, batch_size, epochs=1):
 
 
 tg = TensorGraph(
-    batch_size=batch_size,
-    mode=str("regression"),
-    model_dir=str("/tmp/atom_conv"))
+  batch_size=batch_size,
+  mode=str("regression"),
+  model_dir=str("/tmp/atom_conv"))
 tg.add_output(score)
 tg.set_loss(loss)
 
 print("Fitting")
 metric = [
-    dc.metrics.Metric(dc.metrics.mean_absolute_error, mode="regression"),
-    dc.metrics.Metric(dc.metrics.pearson_r2_score, mode="regression")
+  dc.metrics.Metric(dc.metrics.mean_absolute_error, mode="regression"),
+  dc.metrics.Metric(dc.metrics.pearson_r2_score, mode="regression")
 ]
 tg.fit_generator(feed_dict_generator(train_dataset, batch_size, epochs=10))
 
 train_evaluator = dc.utils.evaluate.GeneratorEvaluator(
-    tg, feed_dict_generator(train_dataset, batch_size), transformers, [label])
+  tg, feed_dict_generator(train_dataset, batch_size), transformers, [label])
 train_scores = train_evaluator.compute_model_performance(metric)
 print("Train scores")
 print(train_scores)
 test_evaluator = dc.utils.evaluate.GeneratorEvaluator(
-    tg, feed_dict_generator(test_dataset, batch_size), transformers, [label])
+  tg, feed_dict_generator(test_dataset, batch_size), transformers, [label])
 test_scores = test_evaluator.compute_model_performance(metric)
 print("Test scores")
 print(test_scores)
