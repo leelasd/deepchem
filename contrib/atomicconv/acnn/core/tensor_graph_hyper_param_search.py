@@ -113,3 +113,4 @@ for param in params():
   print(param)
   with open('hyper_results.txt', 'a') as fout:
     fout.write(json.dumps(param))
+    fout.write("\n")
