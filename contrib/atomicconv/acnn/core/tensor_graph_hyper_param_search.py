@@ -82,11 +82,8 @@ layer_sizes = [
 
 learning_rates = [
   0.001,
-  0.005,
   0.01,
-  0.015,
   0.02,
-  0.025
 ]
 
 def params():
