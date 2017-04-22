@@ -125,9 +125,9 @@ class AtomicConvScore(Layer):
       )
       return output_layer
 
-    frag1_zeros = tf.zeros_like(frag1_z)
-    frag2_zeros = tf.zeros_like(frag2_z)
-    complex_zeros = tf.zeros_like(complex_z)
+    frag1_zeros = tf.zeros_like(frag1_z, dtype=tf.float32)
+    frag2_zeros = tf.zeros_like(frag2_z, dtype=tf.float32)
+    complex_zeros = tf.zeros_like(complex_z, dtype=tf.float32)
 
     frag1_atomtype_energy = []
     frag2_atomtype_energy = []
@@ -168,7 +168,8 @@ def atomic_conv_model(frag1_num_atoms=70,
                         1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
                         9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0
                       ], [0.0, 4.0, 8.0], [0.4]],
-                      layer_sizes=[32, 32, 16]):
+                      layer_sizes=[32, 32, 16],
+                      learning_rate=0.001):
   rp = [x for x in itertools.product(*radial)]
   frag1_X = Feature(shape=(batch_size, frag1_num_atoms, 3))
   frag1_nbrs = Feature(shape=(batch_size, frag1_num_atoms, max_num_neighbors))
@@ -288,7 +289,8 @@ def atomic_conv_model(frag1_num_atoms=70,
   tg = TensorGraph(
     batch_size=batch_size,
     mode=str("regression"),
-    model_dir=str("/tmp/atom_conv"))
+    model_dir=str("/tmp/atom_conv"),
+    learning_rate=learning_rate)
   tg.add_output(score)
   tg.set_loss(loss)
   return tg, feed_dict_generator, label

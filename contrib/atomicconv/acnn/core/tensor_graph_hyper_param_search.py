@@ -52,6 +52,16 @@ test_dataset = dc.data.DiskDataset.from_numpy(
   tasks=pdbbind_tasks)
 
 batch_size = 24
+radial1 = [[
+  1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
+  9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0
+], [float(x) for x in range(1, 13)],
+  [float(x) * 2 for x in range(1, 7)]
+]
+radial2 = [
+
+]
+
 tg, feed_dict_generator, label = atomic_conv_model()
 
 print("Fitting")
