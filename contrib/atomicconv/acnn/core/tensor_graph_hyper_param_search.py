@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import os
 import sys
 import deepchem as dc
+import json
 import numpy as np
 import tensorflow as tf
 from deepchem.models.tensorgraph.models.atomic_conv import atomic_conv_model
@@ -61,7 +62,7 @@ radial1 = [[
 radial2 = [
   [0.0, 4.0, 8.0],
   [0.0, 2.0, 4.0, 6.0, 8.0],
-  [0.0, 16.0]
+  [0.0, 16.0],
   [0.0, 2.0, 4.0, 6.0, 8.0, 10.0],
 ]
 radial3 = [
@@ -88,22 +89,27 @@ learning_rates = [
   0.025
 ]
 
-tg, feed_dict_generator, label = atomic_conv_model()
-
-print("Fitting")
+def params():
+  for values in itertools.product(radial1, radial2, radial3, layer_sizes, learning_rates):
+    d = {
+      "radial": [values[0], values[1], values[2]],
+      "layer_sizes": values[3],
+      "learning_rate": values[4]
+    }
+    yield d
 metric = [
   dc.metrics.Metric(dc.metrics.mean_absolute_error, mode="regression"),
   dc.metrics.Metric(dc.metrics.pearson_r2_score, mode="regression")
 ]
-tg.fit_generator(feed_dict_generator(train_dataset, batch_size, epochs=10))
+for param in params():
+  tg, feed_dict_generator, label = atomic_conv_model(**param)
+  tg.fit_generator(feed_dict_generator(train_dataset, batch_size, epochs=10))
 
-train_evaluator = dc.utils.evaluate.GeneratorEvaluator(
-  tg, feed_dict_generator(train_dataset, batch_size), transformers, [label])
-train_scores = train_evaluator.compute_model_performance(metric)
-print("Train scores")
-print(train_scores)
-test_evaluator = dc.utils.evaluate.GeneratorEvaluator(
-  tg, feed_dict_generator(test_dataset, batch_size), transformers, [label])
-test_scores = test_evaluator.compute_model_performance(metric)
-print("Test scores")
-print(test_scores)
+  test_evaluator = dc.utils.evaluate.GeneratorEvaluator(
+    tg, feed_dict_generator(test_dataset, batch_size), transformers, [label])
+  test_scores = test_evaluator.compute_model_performance(metric)
+  param.update(test_scores)
+  print("Results")
+  print(param)
+  with open('hyper_results.txt', 'a') as fout:
+    fout.write(json.dumps(param))
