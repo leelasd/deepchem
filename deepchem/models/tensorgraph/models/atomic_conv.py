@@ -81,7 +81,7 @@ class AtomicConvScore(Layer):
     layer_sizes = self.layer_sizes
     num_layers = len(layer_sizes)
     weight_init_stddevs = [1 / np.sqrt(x) for x in layer_sizes]
-    bias_init_consts = [0] * num_layers
+    bias_init_consts = [0.0] * num_layers
 
     weights = []
     biases = []
