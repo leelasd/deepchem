@@ -35,40 +35,17 @@ splits = [
 
 
 def params():
-  d1 = {
-    "name": "original",
-    "radial": [[
-      1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
-      9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0
-    ], [0.0, 4.0, 8.0], [0.4]],
-    "layer_sizes": [32, 32, 16],
-    "learning_rate": 0.002,
-    "epochs": 10
-  }
-  yield d1
   d2 = {
-    "name": "hyper1",
+    "name": "hyper3",
     "radial": [[
       1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
       9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0
     ], [0.0, 4.0, 8.0], [0.2]],
     "layer_sizes": [10, 10, 10, 10, 10],
-    "learning_rate": 0.0005,
-    "epochs": 20,
+    "learning_rate": 0.001,
+    "epochs": 10,
   }
   yield d2
-  d3 = {
-    "name": "hyper2",
-    "radial": [[
-      1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
-      9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0
-    ], [0.0, 4.0, 8.0], [0.2]],
-    "layer_sizes": [32, 32, 32, 32, 32],
-    "learning_rate": 0.0005,
-    "epochs": 20
-  }
-  yield d3
-
 
 metric = [
   dc.metrics.Metric(dc.metrics.mean_absolute_error, mode="regression"),
