@@ -163,7 +163,7 @@ def atomic_conv_model(frag1_num_atoms=70,
                       complex_num_atoms=701,
                       max_num_neighbors=12,
                       batch_size=24,
-                      at=[6, 7., 8., 9., 11., 12., 15., 16., 17., 20., 25., 30., 35., 53.],
+                      at=[6, 7., 8., 9., 11., 12., 15., 16., 17., 20., 25., 30., 35., 53., -1.],
                       radial=[[
                         1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
                         9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0
@@ -212,6 +212,13 @@ def atomic_conv_model(frag1_num_atoms=70,
   loss = L2LossLayer(in_layers=[score, label])
 
   def feed_dict_generator(dataset, batch_size, epochs=1):
+    def replace_atom_types(z):
+      def place_holder(i):
+        if i in at:
+          return i
+        return -1
+      return np.array([place_holder(x) for x in z])
+
     for epoch in range(epochs):
       for ind, (F_b, y_b, w_b, ids_b) in enumerate(
         dataset.iterbatches(batch_size, deterministic=True, pad_batches=True)):
@@ -241,7 +248,8 @@ def atomic_conv_model(frag1_num_atoms=70,
         frag1_Nbrs = np.zeros((batch_size, N_1, M))
         frag1_Z_b = np.zeros((batch_size, N_1))
         for i in range(batch_size):
-          frag1_Z_b[i] = F_b[i][2]
+          z = replace_atom_types(F_b[i][2])
+          frag1_Z_b[i] = z
         frag1_Nbrs_Z = np.zeros((batch_size, N_1, M))
         for atom in range(N_1):
           for i in range(batch_size):
@@ -256,7 +264,8 @@ def atomic_conv_model(frag1_num_atoms=70,
         frag2_Nbrs = np.zeros((batch_size, N_2, M))
         frag2_Z_b = np.zeros((batch_size, N_2))
         for i in range(batch_size):
-          frag2_Z_b[i] = F_b[i][5]
+          z = replace_atom_types(F_b[i][5])
+          frag2_Z_b = z
         frag2_Nbrs_Z = np.zeros((batch_size, N_2, M))
         for atom in range(N_2):
           for i in range(batch_size):
@@ -271,7 +280,8 @@ def atomic_conv_model(frag1_num_atoms=70,
         complex_Nbrs = np.zeros((batch_size, N, M))
         complex_Z_b = np.zeros((batch_size, N))
         for i in range(batch_size):
-          complex_Z_b[i] = F_b[i][8]
+          z = replace_atom_types(F_b[i][8])
+          complex_Z_b = z
         complex_Nbrs_Z = np.zeros((batch_size, N, M))
         for atom in range(N):
           for i in range(batch_size):
