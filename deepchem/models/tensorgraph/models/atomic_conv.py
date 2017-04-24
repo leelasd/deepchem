@@ -265,7 +265,7 @@ def atomic_conv_model(frag1_num_atoms=70,
         frag2_Z_b = np.zeros((batch_size, N_2))
         for i in range(batch_size):
           z = replace_atom_types(F_b[i][5])
-          frag2_Z_b = z
+          frag2_Z_b[i] = z
         frag2_Nbrs_Z = np.zeros((batch_size, N_2, M))
         for atom in range(N_2):
           for i in range(batch_size):
@@ -281,7 +281,7 @@ def atomic_conv_model(frag1_num_atoms=70,
         complex_Z_b = np.zeros((batch_size, N))
         for i in range(batch_size):
           z = replace_atom_types(F_b[i][8])
-          complex_Z_b = z
+          complex_Z_b[i] = z
         complex_Nbrs_Z = np.zeros((batch_size, N, M))
         for atom in range(N):
           for i in range(batch_size):
