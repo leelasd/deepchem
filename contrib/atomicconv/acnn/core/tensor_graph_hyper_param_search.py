@@ -101,7 +101,7 @@ for param in params():
   num_epochs = param['epochs']
   del param['epochs']
   tg, feed_dict_generator, label = atomic_conv_model(**param)
-  tg.fit_generator(feed_dict_generator(train_dataset, batch_size, epochs=num_epochs, pad_batches=False))
+  tg.fit_generator(feed_dict_generator(train_dataset, batch_size, epochs=num_epochs))
 
   test_evaluator = dc.utils.evaluate.GeneratorEvaluator(
     tg, feed_dict_generator(test_dataset, batch_size), transformers, [label])
