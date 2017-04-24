@@ -63,11 +63,12 @@ radial3 = [
   [0.2],
 ]
 layer_sizes = [
-  [32, 32, 16],
-  [32, 32, 32, 16],
-  [16, 16, 16, 16],
   [10, 10, 10, 10, 10],
-  [32, 32, 32, 32, 32]
+  [16, 16, 16, 16, 16],
+  [32, 32, 16, 16, 8],
+  [32, 32, 32, 32, 32],
+  [32, 32, 16, 16, 8, 4],
+  [10, 10, 10, 10, 10, 10]
 ]
 
 learning_rates = [
@@ -78,8 +79,10 @@ learning_rates = [
 
 epochs = [
   10,
-  20
+  20,
+  30
 ]
+
 
 def params():
   for values in itertools.product(radial1, radial2, radial3, layer_sizes, learning_rates, epochs):
@@ -90,6 +93,8 @@ def params():
       "epochs": values[5]
     }
     yield d
+
+
 metric = [
   dc.metrics.Metric(dc.metrics.mean_absolute_error, mode="regression"),
   dc.metrics.Metric(dc.metrics.pearson_r2_score, mode="regression")
