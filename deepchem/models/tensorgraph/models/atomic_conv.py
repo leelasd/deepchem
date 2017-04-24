@@ -211,7 +211,7 @@ def atomic_conv_model(frag1_num_atoms=70,
   label = Label(shape=(None, 1))
   loss = L2LossLayer(in_layers=[score, label])
 
-  def feed_dict_generator(dataset, batch_size, epochs=1):
+  def feed_dict_generator(dataset, batch_size, epochs=1, pad_batches=True):
     def replace_atom_types(z):
       def place_holder(i):
         if i in at:
@@ -221,7 +221,7 @@ def atomic_conv_model(frag1_num_atoms=70,
 
     for epoch in range(epochs):
       for ind, (F_b, y_b, w_b, ids_b) in enumerate(
-        dataset.iterbatches(batch_size, deterministic=True, pad_batches=True)):
+        dataset.iterbatches(batch_size, deterministic=True, pad_batches=pad_batches)):
         N = complex_num_atoms
         N_1 = frag1_num_atoms
         N_2 = frag2_num_atoms
