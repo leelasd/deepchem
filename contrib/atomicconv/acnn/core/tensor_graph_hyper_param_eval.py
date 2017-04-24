@@ -43,8 +43,7 @@ def params():
     ], [0.0, 4.0, 8.0], [0.4]],
     "layer_sizes": [32, 32, 16],
     "learning_rate": 0.002,
-    "epochs": 10,
-    "split": split
+    "epochs": 10
   }
   yield d1
   d2 = {
@@ -56,7 +55,6 @@ def params():
     "layer_sizes": [10, 10, 10, 10, 10],
     "learning_rate": 0.0005,
     "epochs": 20,
-    "split": split
   }
   yield d2
   d3 = {
@@ -67,8 +65,7 @@ def params():
     ], [0.0, 4.0, 8.0], [0.2]],
     "layer_sizes": [32, 32, 32, 32, 32],
     "learning_rate": 0.0005,
-    "epochs": 20,
-    "split": split
+    "epochs": 20
   }
   yield d3
 
@@ -107,8 +104,6 @@ for split in splits:
   for param in params():
     num_epochs = param['epochs']
     del param['epochs']
-    split = param['split']
-    del param['split']
     name = param['name']
     del param['name']
 
