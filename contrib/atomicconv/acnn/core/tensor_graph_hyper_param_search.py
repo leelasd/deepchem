@@ -25,9 +25,8 @@ tf.set_random_seed(seed)
 
 base_dir = os.getcwd()
 data_dir = os.path.join(base_dir, "datasets")
-train_dir = os.path.join(data_dir, "random_train")
-test_dir = os.path.join(data_dir, "random_test")
-model_dir = os.path.join(base_dir, "random_model")
+train_dir = os.path.join(data_dir, "scaffold_train")
+test_dir = os.path.join(data_dir, "scaffold_test")
 
 train_dataset = dc.data.DiskDataset(train_dir)
 test_dataset = dc.data.DiskDataset(test_dir)
@@ -55,37 +54,40 @@ test_dataset = dc.data.DiskDataset.from_numpy(
 batch_size = 24
 radial1 = [[
   1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
-  9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0
-]
+  9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0]
 ]
 radial2 = [
   [0.0, 4.0, 8.0]
 ]
 radial3 = [
   [0.2],
-  [0.4],
-  [0.6]
 ]
 layer_sizes = [
   [32, 32, 16],
   [32, 32, 32, 16],
   [16, 16, 16, 16],
   [10, 10, 10, 10, 10],
+  [32, 32, 32, 32, 32]
 ]
 
 learning_rates = [
   0.0001,
+  0.0005,
   0.001,
-  0.01,
-  0.02,
+]
+
+epochs = [
+  10,
+  20
 ]
 
 def params():
-  for values in itertools.product(radial1, radial2, radial3, layer_sizes, learning_rates):
+  for values in itertools.product(radial1, radial2, radial3, layer_sizes, learning_rates, epochs):
     d = {
       "radial": [values[0], values[1], values[2]],
       "layer_sizes": values[3],
-      "learning_rate": values[4]
+      "learning_rate": values[4],
+      "epochs": values[5]
     }
     yield d
 metric = [
@@ -93,13 +95,15 @@ metric = [
   dc.metrics.Metric(dc.metrics.pearson_r2_score, mode="regression")
 ]
 for param in params():
+  num_epochs = param['epochs']
   tg, feed_dict_generator, label = atomic_conv_model(**param)
-  tg.fit_generator(feed_dict_generator(train_dataset, batch_size, epochs=10))
+  tg.fit_generator(feed_dict_generator(train_dataset, batch_size, epochs=num_epochs))
 
   test_evaluator = dc.utils.evaluate.GeneratorEvaluator(
     tg, feed_dict_generator(test_dataset, batch_size), transformers, [label])
   test_scores = test_evaluator.compute_model_performance(metric)
   param.update(test_scores)
+  param['epochs'] = num_epochs
   print("Results")
   print(param)
   with open('hyper_results.txt', 'a') as fout:
