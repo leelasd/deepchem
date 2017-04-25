@@ -27,9 +27,10 @@ base_dir = os.getcwd()
 
 batch_size = 24
 splits = [
-  "random",
-  "stratified",
-  "index"
+  #"random",
+  #"stratified",
+  #"index",
+  "scaffold"
 ]
 
 
