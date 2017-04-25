@@ -185,13 +185,16 @@ def compute_pdbbind_features(grid_featurizer, pdb_subdir, pdb_code):
   return features
 
 
-def load_pdbbind_grid(split="index", featurizer="grid", subset="core"):
+def load_pdbbind_grid(split="index", featurizer="atomic_conv", subset="refined"):
   """Load PDBBind datasets. Does not do train/test split"""
   dataset, tasks = featurize_pdbbind(feat=featurizer, subset=subset)
+  dataset.w
 
   splitters = {
       'index': dc.splits.IndexSplitter(),
-      'random': dc.splits.RandomSplitter()
+      'random': dc.splits.RandomSplitter(),
+      'scaffold': dc.splits.ScaffoldSplitter(),
+      'stratified': dc.splits.RandomStratifiedSplitter()
   }
   splitter = splitters[split]
   train, valid, test = splitter.train_valid_test_split(dataset)

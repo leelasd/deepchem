@@ -4,7 +4,7 @@ bash scripts/install_deepchem_conda.sh $envname
 source activate $envname
 python setup.py install
 
-cd contrib/atomicconv/acnn/core
+cd contrib/atomicconv/acnn/refined
 python tensor_graph_hyper_param_eval.py
 
 source deactivate
