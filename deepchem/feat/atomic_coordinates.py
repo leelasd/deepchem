@@ -200,8 +200,8 @@ class ComplexNeighborListFragmentAtomicCoordinates(ComplexFeaturizer):
       self.max_num_neighbors, self.neighbor_cutoff)
 
   def _featurize_complex(self, mol_pdb_file, protein_pdb_file):
-    frag1_coords, frag1_mol = rdkit_util.load_molecule(mol_pdb_file)
-    frag2_coords, frag2_mol = rdkit_util.load_molecule(protein_pdb_file)
+    frag1_coords, frag1_mol = rdkit_util.load_molecule(mol_pdb_file, calc_charges=False, add_hydrogens=False)
+    frag2_coords, frag2_mol = rdkit_util.load_molecule(protein_pdb_file, calc_charges=False, add_hydrogens=False)
     system_mol = rdkit_util.merge_molecules(frag1_mol, frag2_mol)
     system_coords = rdkit_util.get_xyz_from_mol(system_mol)
 
