@@ -27,9 +27,9 @@ base_dir = os.getcwd()
 
 batch_size = 24
 splits = [
-  #"random",
-  #"stratified",
-  #"index",
+  "random",
+  "stratified",
+  "index",
   "scaffold"
 ]
 
@@ -122,13 +122,13 @@ for split in splits:
       valid_evaluator = dc.utils.evaluate.GeneratorEvaluator(
         tg, feed_dict_generator(valid_dataset, batch_size), transformers, [label])
       valid_scores = valid_evaluator.compute_model_performance(metric)
-      valid_scores = {{"%s_valid" % k: v for k, v in valid_scores.items()}}
+      valid_scores = {"%s_valid" % k: v for k, v in valid_scores.items()}
       param.update(valid_scores)
-      test_evaluator = dc.utils.evaluate.GeneratorEvaluator(
-        tg, feed_dict_generator(test_dataset, batch_size), transformers, [label])
-      test_scores = test_evaluator.compute_model_performance(metric)
-      test_scores = {{"%s_test" % k: v for k, v in test_scores.items()}}
-      param.update(test_scores)
+      # test_evaluator = dc.utils.evaluate.GeneratorEvaluator(
+      #   tg, feed_dict_generator(test_dataset, batch_size), transformers, [label])
+      # test_scores = test_evaluator.compute_model_performance(metric)
+      # test_scores = {"%s_test" % k: v for k, v in test_scores.items()}
+      # param.update(test_scores)
       param['epochs'] = num_epochs * (i + 1)
       param['split'] = split
       param['name'] = name
