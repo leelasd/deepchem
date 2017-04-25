@@ -5,7 +5,7 @@ source activate $envname
 python setup.py install
 
 cd contrib/atomicconv/acnn/core
-python tensor_graph_hyper_param_eval.py
+python tensor_graph_hyper_param_search.py
 
 source deactivate
 conda remove --name $envname --all
