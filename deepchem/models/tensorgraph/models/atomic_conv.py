@@ -170,6 +170,45 @@ def atomic_conv_model(frag1_num_atoms=70,
                       ], [0.0, 4.0, 8.0], [0.4]],
                       layer_sizes=[32, 32, 16],
                       learning_rate=0.001):
+  """
+  best hyper-params as of now
+ {
+    "name": "hyper5",
+    "radial": [[1.5,
+                2.5,
+                3.5,
+                4.5,
+                5.5,
+                6.0,
+                6.5,
+                7.0,
+                7.5,
+                8.0,
+                8.5,
+                9.0,
+                9.5,
+                10.0,
+                10.5], [0.0, 2.0, 4.0], [0.05]],
+    "layer_sizes": [32, 16, 8],
+    "learning_rate": 0.001,
+    "epochs": 10,
+  } 
+  Parameters
+  ----------
+  frag1_num_atoms
+  frag2_num_atoms
+  complex_num_atoms
+  max_num_neighbors
+  batch_size
+  at
+  radial
+  layer_sizes
+  learning_rate
+
+  Returns
+  -------
+
+  """
   rp = [x for x in itertools.product(*radial)]
   frag1_X = Feature(shape=(batch_size, frag1_num_atoms, 3))
   frag1_nbrs = Feature(shape=(batch_size, frag1_num_atoms, max_num_neighbors))
