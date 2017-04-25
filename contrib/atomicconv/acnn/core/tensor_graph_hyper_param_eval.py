@@ -47,14 +47,15 @@ def params():
   yield d2
   d2 = {
     "name": "hyper4",
-    "radial": [[
-      1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5,
-      9.0, 9.5, 10.0, 10.5], [0.0, 4.0, 8.0], [0.1]],
+    "radial": [
+      [1.5, 2.5, 3.5, 4.5, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5],
+      [0.0, 4.0, 8.0], [0.1]],
     "layer_sizes": [32, 32, 16],
     "learning_rate": 0.001,
     "epochs": 10,
   }
   yield d2
+
 
 metric = [
   dc.metrics.Metric(dc.metrics.mean_absolute_error, mode="regression"),
