@@ -1,23 +1,18 @@
-from __future__ import print_function
 from __future__ import division
+from __future__ import print_function
 from __future__ import unicode_literals
 
-import os
-import sys
-import deepchem as dc
 import json
-import numpy as np
-import tensorflow as tf
+import sys
+
+import os
+
+import deepchem as dc
 from deepchem.models.tensorgraph.models.atomic_conv import atomic_conv_model
 
 sys.path.append("../../models")
-from deepchem.models.tensorgraph.layers import Layer, Feature, Label, L2LossLayer, AtomicConvolution, Transpose, Dense
-from deepchem.models import TensorGraph
-
 import numpy as np
 import tensorflow as tf
-import itertools
-import time
 
 seed = 123
 np.random.seed(seed)
