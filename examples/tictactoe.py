@@ -13,9 +13,9 @@ class TicTacToeEnvironment(dc.rl.Environment):
   """
   Learn to play tic tac toe going first as X
   """
-  X = 1
-  O = 2
-  EMPTY = 0
+  X = np.array([1, 0])
+  O = np.array([0, 1])
+  EMPTY = np.array([0, 0])
 
   ILLEGAL_MOVE_PENALTY = -5
   LOSS_PENALTY = -3
@@ -23,19 +23,19 @@ class TicTacToeEnvironment(dc.rl.Environment):
   WIN_REWARD = 3
 
   def __init__(self):
-    super().__init__([(3, 3)], 9)
-    self._state = [np.zeros(shape=(3, 3), dtype=np.int)]
+    super().__init__([(3, 3, 2)], 9)
+    self.reset()
 
   def reset(self):
     self._terminated = False
-    self._state = [np.zeros(shape=(3, 3), dtype=np.int)]
+    self._state = [np.zeros(shape=(3, 3, 2), dtype=np.int)]
 
   def step(self, action):
     row = action // 3
     col = action % 3
 
     # Illegal move -- the square is not empty
-    if self._state[0][row][col] != TicTacToeEnvironment.EMPTY:
+    if not np.all(self._state[0][row][col] == TicTacToeEnvironment.EMPTY):
       self._terminated = True
       return TicTacToeEnvironment.ILLEGAL_MOVE_PENALTY
 
@@ -68,36 +68,38 @@ class TicTacToeEnvironment(dc.rl.Environment):
     empty_squares = []
     for row in range(3):
       for col in range(3):
-        if self._state[0][row][col] == TicTacToeEnvironment.EMPTY:
+        if np.all(self._state[0][row][col] == TicTacToeEnvironment.EMPTY):
           empty_squares.append((row, col))
     return random.choice(empty_squares)
 
   def check_winner(self, player):
     for i in range(3):
-      row = set(self._state[0][i][:])
-      if len(row) == 1 and player in row:
+      row = np.sum(self._state[0][i][:])
+      if np.all(row == player * 3):
         return True
-      col = set(self._state[0][:][i])
-      if len(col) == 1 and player in col:
+      col = np.sum(self._state[0][:][i])
+      if np.all(col == player * 3):
         return True
     return False
 
   def game_over(self):
     s = set()
     for i in range(3):
-      s.update(self._state[0][i])
-    return TicTacToeEnvironment.EMPTY not in s
+      for j in range(3):
+        if np.all(self._state[0][i][j] == TicTacToeEnvironment.EMPTY):
+          return False
+    return True
 
   def display(self):
     state = self._state[0]
     s = ""
     for row in range(3):
       for col in range(3):
-        if state[row][col] == TicTacToeEnvironment.EMPTY:
+        if np.all(state[row][col] == TicTacToeEnvironment.EMPTY):
           s += "_"
-        if state[row][col] == TicTacToeEnvironment.X:
+        if np.all(state[row][col] == TicTacToeEnvironment.X):
           s += "X"
-        if state[row][col] == TicTacToeEnvironment.O:
+        if np.all(state[row][col] == TicTacToeEnvironment.O):
           s += "O"
       s += "\n"
     return s
@@ -129,7 +131,6 @@ def main():
     action = a3c.select_action(env._state)
     print(env.step(action))
   print(env.display())
-
 
 
 if __name__ == "__main__":
