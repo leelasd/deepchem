@@ -136,7 +136,7 @@ def main():
       a3c.restore()
     except:
       pass
-    a3c.fit(1000000)
+    a3c.fit(100000)
     env.reset()
     while not env._terminated:
       print(env.display())
