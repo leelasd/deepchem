@@ -124,17 +124,18 @@ class TicTacToePolicy(dc.rl.Policy):
 def main():
   env = TicTacToeEnvironment()
   policy = TicTacToePolicy()
-  a3c = dc.rl.A3C(env, policy, model_dir="/home/leswing/tictactoe")
-  a3c.optimizer = dc.models.tensorgraph.TFWrapper(tf.train.AdamOptimizer,
-                                                  learning_rate=0.01)
-  try:
-    a3c.restore()
-  except:
-    pass
+
   start = time.time()
   end = time.time()
   timeout = 60 * 60  # One Hour
   while end - start < timeout:
+    a3c = dc.rl.A3C(env, policy, model_dir="/home/leswing/tictactoe")
+    a3c.optimizer = dc.models.tensorgraph.TFWrapper(tf.train.AdamOptimizer,
+                                                    learning_rate=0.01)
+    try:
+      a3c.restore()
+    except:
+      pass
     a3c.fit(100000)
     env.reset()
     while not env._terminated:
