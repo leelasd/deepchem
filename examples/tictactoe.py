@@ -7,7 +7,7 @@ import time
 from deepchem.models.tensorgraph.layers import Flatten, Dense, SoftMax, \
   Variable, \
   Feature, Layer
-from rl.a3c import _Worker
+from deepchem.rl.a3c import _Worker
 
 
 class TicTacToeEnvironment(dc.rl.Environment):
@@ -136,7 +136,7 @@ def main():
       a3c.restore()
     except:
       pass
-    a3c.fit(100000)
+    a3c.fit(1000000)
     env.reset()
     while not env._terminated:
       print(env.display())
