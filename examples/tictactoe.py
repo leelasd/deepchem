@@ -2,6 +2,7 @@ import deepchem as dc
 import numpy as np
 import random
 import tensorflow as tf
+import time
 
 from deepchem.models.tensorgraph.layers import Flatten, Dense, SoftMax, \
   Variable, \
@@ -10,9 +11,6 @@ from rl.a3c import _Worker
 
 
 class TicTacToeEnvironment(dc.rl.Environment):
-  """
-  Learn to play tic tac toe going first as X
-  """
   X = np.array([1, 0])
   O = np.array([0, 1])
   EMPTY = np.array([0, 0])
@@ -29,6 +27,11 @@ class TicTacToeEnvironment(dc.rl.Environment):
   def reset(self):
     self._terminated = False
     self._state = [np.zeros(shape=(3, 3, 2), dtype=np.int)]
+
+    # Randomize who goes first
+    if random.randint(0, 1) == 1:
+      move = self.get_O_move()
+      self._state[0][move[0]][move[1]] = TicTacToeEnvironment.O
 
   def step(self, action):
     row = action // 3
@@ -121,16 +124,25 @@ class TicTacToePolicy(dc.rl.Policy):
 def main():
   env = TicTacToeEnvironment()
   policy = TicTacToePolicy()
-  a3c = dc.rl.A3C(env, policy, model_dir="/tmp/tictactoe")
+  a3c = dc.rl.A3C(env, policy, model_dir="/home/leswing/tictactoe")
   a3c.optimizer = dc.models.tensorgraph.TFWrapper(tf.train.AdamOptimizer,
                                                   learning_rate=0.01)
-  a3c.fit(10000)
-  env.reset()
-  while not env._terminated:
+  try:
+    a3c.restore()
+  except:
+    pass
+  start = time.time()
+  end = time.time()
+  timeout = 60 * 60  # One Hour
+  while end - start < timeout:
+    a3c.fit(100000)
+    env.reset()
+    while not env._terminated:
+      print(env.display())
+      action = a3c.select_action(env._state)
+      print(env.step(action))
     print(env.display())
-    action = a3c.select_action(env._state)
-    print(env.step(action))
-  print(env.display())
+    end = time.time()
 
 
 if __name__ == "__main__":
