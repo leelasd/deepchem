@@ -139,12 +139,12 @@ class A3C(object):
     """
     with self._graph._get_tf("Graph").as_default():
       train_op = self._graph._get_tf('train_op')
-      self._session.run(tf.global_variables_initializer())
       step_count = [0]
       workers = []
       threads = []
       for i in range(multiprocessing.cpu_count()):
         workers.append(_Worker(self, i))
+      self._session.run(tf.global_variables_initializer())
       for worker in workers:
         thread = threading.Thread(
             name=worker.scope,
@@ -263,7 +263,7 @@ class _Worker(object):
     for i in range(self.a3c.max_rollout_length):
       if self.env.terminated:
         break
-      state = self.env.state
+      state = copy.deepcopy(self.env.state)
       for j in range(len(state)):
         states[j].append(state[j])
       feed_dict = _create_feed_dict(self.features, state)

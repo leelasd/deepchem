@@ -129,6 +129,8 @@ class Dense(Layer):
       activation_fn=None,
       biases_initializer=tf.zeros_initializer,
       weights_initializer=tf.contrib.layers.variance_scaling_initializer,
+      normalizer_fn=None,
+      normalizer_params=None,
       time_series=False,
       **kwargs):
     """Create a dense layer.
@@ -158,6 +160,8 @@ class Dense(Layer):
     self.activation_fn = activation_fn
     self.biases_initializer = biases_initializer
     self.weights_initializer = weights_initializer
+    self.normalizer_fn = normalizer_fn
+    self.normalizer_params = normalizer_params
     self.time_series = time_series
     self._reuse = False
     self._shared_with = None
@@ -180,6 +184,8 @@ class Dense(Layer):
           activation_fn=self.activation_fn,
           biases_initializer=biases_initializer,
           weights_initializer=self.weights_initializer(),
+          normalizer_fn=self.normalizer_fn,
+          normalizer_params=self.normalizer_params,
           scope=self._get_scope_name(),
           reuse=self._reuse,
           trainable=True)
@@ -189,6 +195,8 @@ class Dense(Layer):
                                                            activation_fn=self.activation_fn,
                                                            biases_initializer=biases_initializer,
                                                            weights_initializer=self.weights_initializer(),
+                                                           normalizer_fn=self.normalizer_fn,
+                                                           normalizer_params=self.normalizer_params,
                                                            scope=self._get_scope_name(),
                                                            reuse=self._reuse,
                                                            trainable=True)
@@ -1022,7 +1030,7 @@ class BatchNorm(Layer):
     in_layers = convert_to_layers(in_layers)
 
     parent_tensor = in_layers[0].out_tensor
-    out_tensor = tf.layers.batch_normalization(parent_tensor)
+    out_tensor = tf.layers.batch_normalization(parent_tensor, trainable=True)
     if set_tensors:
       self.out_tensor = out_tensor
     return out_tensor
