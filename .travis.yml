@@ -5,7 +5,9 @@ python:
 sudo: required
 dist: trusty
 install:
+- echo "Hello World"
 script:
+- echo "Hello World"
 after_success:
 - echo $TRAVIS_SECURE_ENV_VARS
 - coveralls
