@@ -13,7 +13,7 @@ fi
 # -----------------------------------
 echo "About to install numpydoc, s3cmd"
 pip install numpydoc s3cmd msmb_theme sphinx_rtd_theme
-conda list -e
+pip freeze
 mkdir -p docs/_build
 echo "About to build docs"
 sphinx-apidoc -f -o docs/source deepchem
