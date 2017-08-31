@@ -23,4 +23,4 @@ sphinx-build -b html docs/source docs/_build
 # Copy 
 cp -r docs/_build/ website/docs/
 echo "About to push docs to s3"
-python devtools/travis-ci/push-docs-to-s3.py
+#python devtools/travis-ci/push-docs-to-s3.py
