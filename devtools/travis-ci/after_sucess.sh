@@ -2,7 +2,7 @@
 # -----------------------------------
 echo "About to install numpydoc, s3cmd"
 pip install -I sphinx==1.3.5 sphinx_bootstrap_theme
-pip install numpydoc s3cmd msmb_theme sphinx_rtd_theme
+pip install nbsphinx numpydoc s3cmd msmb_theme sphinx_rtd_theme
 pip freeze
 conda list -e
 mkdir -p docs/_build
