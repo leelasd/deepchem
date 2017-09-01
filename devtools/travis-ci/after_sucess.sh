@@ -2,6 +2,7 @@
 # Create the docs and push them to S3
 # -----------------------------------
 echo "About to install numpydoc, s3cmd"
+pip install jupyter jupyter_client
 pip install -I sphinx==1.3.5 sphinx_bootstrap_theme
 pip install numpydoc s3cmd msmb_theme sphinx_rtd_theme nbsphinx
 conda list -e
