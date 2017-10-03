@@ -5,7 +5,7 @@ import tensorflow as tf
 
 import deepchem as dc
 import pyanitools as pya
-import app
+# import app
 
 
 def convert_species_to_atomic_nums(s):
@@ -17,8 +17,9 @@ def convert_species_to_atomic_nums(s):
 
 
 # replace with your own scratch directory
-data_dir = "/media/yutong/datablob/datasets"
-model_dir = "/media/yutong/datablob/models"
+data_dir = "/home/leswing/ANI-1/datasets"
+model_dir = "/home/leswing/ANI-1/models"
+base_dir = "/home/yzhao/ANI-1_release"
 
 all_dir = os.path.join(data_dir, "all")
 test_dir = os.path.join(data_dir, "test")
@@ -47,12 +48,6 @@ def load_roiterberg_ANI(mode="atomization"):
     and c is an array of indices denoting the group of each 
 
   """
-  if "ROITBERG_ANI" not in os.environ:
-    raise ValueError(
-        "Please set environment variable ROITBERG_ANI to where the ani_dgb_s0x.h5 files are."
-    )
-
-  base_dir = os.environ["ROITBERG_ANI"]
 
   # Number of conformations in each file increases exponentially.
   # Start with a smaller dataset before continuing. Use all of them
@@ -60,8 +55,8 @@ def load_roiterberg_ANI(mode="atomization"):
   hdf5files = [
       'ani_gdb_s01.h5',
       'ani_gdb_s02.h5',
-      # 'ani_gdb_s03.h5',
-      # 'ani_gdb_s04.h5',
+      'ani_gdb_s03.h5',
+      'ani_gdb_s04.h5',
       # 'ani_gdb_s05.h5',
       # 'ani_gdb_s06.h5',
       # 'ani_gdb_s07.h5',
