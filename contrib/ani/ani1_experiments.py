@@ -5,7 +5,55 @@ import tensorflow as tf
 
 import deepchem as dc
 import pyanitools as pya
+import sqlite3
+import sys
+import arrow
+
+
 # import app
+
+def save_result(exp_id, train_r2, valid_r2, test_r2, train_mae, valid_mae, test_mae, epochs, timestamp):
+  conn = sqlite3.connect('exps.db')
+  c = conn.cursor()
+
+  # Insert a row of data
+  c.execute("""
+  INSERT INTO result (exp_id, train_r2, valid_r2, test_r2, train_mae, valid_mae, test_mae, epochs, timestamp) 
+  VALUES (?, ?, ?, ?,?, ?, ?, ?, ?)""",
+            (exp_id, train_r2, valid_r2, test_r2, train_mae, valid_mae, test_mae, epochs, timestamp))
+
+  # Save (commit) the changes
+  conn.commit()
+
+  # We can also close the connection if we are done with it.
+  # Just be sure any changes have been committed or they will be lost.
+  conn.close()
+
+
+def get_experiment():
+  """
+  TODO(LESWING) thread safe
+  Returns
+  -------
+
+  """
+  conn = sqlite3.connect('exps.db')
+  c = conn.cursor()
+
+  c.execute("""
+  SELECT oid, model_folder, num_epochs, kwargs_json, status FROM experiment
+  WHERE status = 'READY'
+  ORDER BY oid
+  LIMIT 1
+  """)
+  l = c.fetchone()
+  c.execute("""
+  UPDATE experiment SET status = 'RUNNING' WHERE oid=?
+  """, (l[0],))
+
+  conn.commit()
+  conn.close()
+  return l
 
 
 def convert_species_to_atomic_nums(s):
@@ -18,7 +66,6 @@ def convert_species_to_atomic_nums(s):
 
 # replace with your own scratch directory
 data_dir = "/home/leswing/ANI-1/datasets"
-model_dir = "/home/leswing/ANI-1/models"
 base_dir = "/home/yzhao/ANI-1_release"
 
 all_dir = os.path.join(data_dir, "all")
@@ -52,15 +99,18 @@ def load_roiterberg_ANI(mode="atomization"):
   # Number of conformations in each file increases exponentially.
   # Start with a smaller dataset before continuing. Use all of them
   # for production
+  if os.path.isdir(fold_dir) and os.path.isdir(test_dir):
+    return dc.data.DiskDataset(fold_dir), dc.data.DiskDataset(test_dir), 96
+
   hdf5files = [
     'ani_gdb_s01.h5',
     'ani_gdb_s02.h5',
     'ani_gdb_s03.h5',
     'ani_gdb_s04.h5',
-    # 'ani_gdb_s05.h5',
-    # 'ani_gdb_s06.h5',
-    # 'ani_gdb_s07.h5',
-    # 'ani_gdb_s08.h5'
+    'ani_gdb_s05.h5',
+    'ani_gdb_s06.h5',
+    'ani_gdb_s07.h5',
+    'ani_gdb_s08.h5'
   ]
 
   hdf5files = [os.path.join(base_dir, f) for f in hdf5files]
@@ -175,7 +225,6 @@ def load_roiterberg_ANI(mode="atomization"):
 
 
 def broadcast(dataset, metadata):
-
   new_metadata = []
 
   for (_, _, _, ids) in dataset.itershards():
@@ -185,8 +234,7 @@ def broadcast(dataset, metadata):
   return new_metadata
 
 
-if __name__ == "__main__":
-
+def main(model_dir, exp_id, num_epochs, kwargs):
   max_atoms = 23
   batch_size = 64  # CHANGED FROM 16
   layer_structures = [128, 128, 64]
@@ -197,15 +245,14 @@ if __name__ == "__main__":
     dc.metrics.Metric(dc.metrics.pearson_r2_score, mode="regression")
   ]
 
-  if os.path.exists(model_dir):
-    print("Restoring existing model...")
-    model = dc.models.ANIRegression.load_numpy(model_dir=model_dir)
+  print("Fitting new model...")
+
+  train_valid_dataset, test_dataset, all_groups = load_roiterberg_ANI(
+    mode="atomization")
+
+  if os.path.isdir(train_dir) and os.path.isdir(valid_dir):
+    train_dataset, valid_dataset = dc.data.DiskDataset(train_dir), dc.data.DiskDataset(valid_dir)
   else:
-    print("Fitting new model...")
-
-    train_valid_dataset, test_dataset, all_groups = load_roiterberg_ANI(
-      mode="atomization")
-
     splitter = dc.splits.RandomGroupSplitter(
       broadcast(train_valid_dataset, all_groups))
 
@@ -213,44 +260,43 @@ if __name__ == "__main__":
     train_dataset, valid_dataset = splitter.train_test_split(
       train_valid_dataset, train_dir=train_dir, test_dir=valid_dir)
 
-    transformers = [
-      dc.trans.NormalizationTransformer(
-        transform_y=True, dataset=train_dataset)
-    ]
+  transformers = [
+    dc.trans.NormalizationTransformer(
+      transform_y=True, dataset=train_dataset)
+  ]
 
-    print("Total training set shape: ", train_dataset.get_shape())
+  print("Total training set shape: ", train_dataset.get_shape())
 
-    for transformer in transformers:
-      train_dataset = transformer.transform(train_dataset)
-      valid_dataset = transformer.transform(valid_dataset)
-      test_dataset = transformer.transform(test_dataset)
+  for transformer in transformers:
+    train_dataset = transformer.transform(train_dataset)
+    valid_dataset = transformer.transform(valid_dataset)
+    test_dataset = transformer.transform(test_dataset)
 
-    model = dc.models.ANIRegression(
-      1,
-      max_atoms,
-      layer_structures=layer_structures,
-      atom_number_cases=atom_number_cases,
-      batch_size=batch_size,
-      learning_rate=0.001,
-      use_queue=True,
-      model_dir=model_dir,
-      mode="regression")
+  model = dc.models.ANIRegression(
+    1,
+    max_atoms,
+    layer_structures=layer_structures,
+    atom_number_cases=atom_number_cases,
+    batch_size=batch_size,
+    learning_rate=0.001,
+    use_queue=True,
+    model_dir=model_dir,
+    mode="regression")
 
-    #   # For production, set nb_epoch to 100+
-    for i in range(10):
-      model.fit(train_dataset, nb_epoch=1, checkpoint_interval=100)
+  for i in range(int(num_epochs / 10 + 1)):
+    model.fit(train_dataset, nb_epoch=10, checkpoint_interval=0)
 
-      print("Saving model...")
-      model.save_numpy()
-      print("Done.")
+    print("Saving model...")
+    model.save_numpy()
+    print("Done.")
 
     print("Evaluating model")
     train_scores = model.evaluate(train_dataset, metric, transformers)
     valid_scores = model.evaluate(valid_dataset, metric, transformers)
     test_scores = model.evaluate(test_dataset, metric, transformers)
 
-    # print("Train scores")
-    # print(train_scores)
+    print("Train scores")
+    print(train_scores)
 
     print("Validation scores")
     print(valid_scores)
@@ -258,16 +304,23 @@ if __name__ == "__main__":
     print("Test scores")
     print(test_scores)
 
-  coords = np.array([
-    [0.3, 0.4, 0.5],
-    [0.8, 0.2, 0.3],
-    [0.1, 0.3, 0.8],
-  ])
+    train_r2, train_mae = train_scores['pearson_r2_score'], train_scores['mean_absolute_error']
+    valid_r2, valid_mae = valid_scores['pearson_r2_score'], valid_scores['mean_absolute_error']
+    test_r2, test_mae = test_scores['pearson_r2_score'], test_scores['mean_absolute_error']
+    nb_epochs = 10 * i
+    timestamp = arrow.utcnow().float_timestamp
+    save_result(exp_id, train_r2, valid_r2, test_r2, train_mae, valid_mae, test_mae, nb_epochs, timestamp)
 
-  atomic_nums = np.array([1, 8, 1])
 
-  print("Prediction of a single test set structure:")
-  print(model.pred_one(coords, atomic_nums))
+def save_test():
+  exp_id = 1
+  train_r2, valid_r2, test_r2, train_mae, valid_mae, test_mae = 0, 0, 0, 0, 0, 0
+  epochs = 10
+  timestamp = 100
+  save_result(exp_id, train_r2, valid_r2, test_r2, train_mae, valid_mae, test_mae, epochs, timestamp)
 
-  print("Gradient of a single test set structure:")
-  print(model.grad_one(coords, atomic_nums))
+
+if __name__ == "__main__":
+  oid, model_folder, num_epochs, kwargs_json, status = get_experiment()
+  model_dir = "%s/models" % model_folder
+  main(model_dir, oid, num_epochs, kwargs_json)
