@@ -11,7 +11,7 @@ for index, line in enumerate(lines):
 used_gpu = set()
 while start_line < len(lines):
   line = lines[start_line]
-  m = re.match(r".*(\d).*", line)
+  m = re.match(r".* (\d) .*", line)
   if m:
     used_gpu.add(int(m.groups()[0]))
   start_line += 1
