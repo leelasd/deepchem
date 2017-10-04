@@ -20,12 +20,11 @@ from deepchem.models.tensorgraph.layers import L2Loss, Label, Weights, Feature
 from deepchem.models.tensorgraph.tensor_graph import TensorGraph
 from deepchem.models.tensorgraph.graph_layers import DTNNEmbedding
 from deepchem.models.tensorgraph.symmetry_functions import DistanceMatrix, \
-    DistanceCutoff, RadialSymmetry, AngularSymmetry, AngularSymmetryMod, \
-    BPFeatureMerge, BPGather, AtomicDifferentiatedDense
+  DistanceCutoff, RadialSymmetry, AngularSymmetry, AngularSymmetryMod, \
+  BPFeatureMerge, BPGather, AtomicDifferentiatedDense
 
 
 class BPSymmetryFunctionRegression(TensorGraph):
-
   def __init__(self,
                n_tasks,
                max_atoms,
@@ -59,9 +58,9 @@ class BPSymmetryFunctionRegression(TensorGraph):
     Hiddens = []
     for n_hidden in self.layer_structures:
       Hidden = Dense(
-          out_channels=n_hidden,
-          activation_fn=tf.nn.tanh,
-          in_layers=[previous_layer])
+        out_channels=n_hidden,
+        activation_fn=tf.nn.tanh,
+        in_layers=[previous_layer])
       Hiddens.append(Hidden)
       previous_layer = Hiddens[-1]
 
@@ -69,7 +68,7 @@ class BPSymmetryFunctionRegression(TensorGraph):
     self.labels_fd = []
     for task in range(self.n_tasks):
       regression = Dense(
-          out_channels=1, activation_fn=None, in_layers=[Hiddens[-1]])
+        out_channels=1, activation_fn=None, in_layers=[Hiddens[-1]])
       output = BPGather(self.max_atoms, in_layers=[regression, self.atom_flags])
       self.add_output(output)
 
@@ -104,19 +103,19 @@ class BPSymmetryFunctionRegression(TensorGraph):
           feed_dict[self.weights] = w_b
 
         flags = np.sign(np.array(X_b[:, :, 0]))
-        feed_dict[self.atom_flags] = np.stack([flags]*self.max_atoms, axis=2)*\
-            np.stack([flags]*self.max_atoms, axis=1)
+        feed_dict[self.atom_flags] = np.stack([flags] * self.max_atoms, axis=2) * \
+                                     np.stack([flags] * self.max_atoms, axis=1)
         feed_dict[self.atom_feats] = np.array(X_b[:, :, 1:], dtype=float)
         yield feed_dict
 
 
 class ANIRegression(TensorGraph):
-
   def __init__(self,
                n_tasks,
                max_atoms,
                layer_structures=[128, 64],
                atom_number_cases=[1, 6, 7, 8, 16],
+               activation='tanh',
                **kwargs):
     """
     Parameters
@@ -136,14 +135,14 @@ class ANIRegression(TensorGraph):
 
     # (ytz): this is really dirty but needed for restoring models
     self._kwargs = {
-        "n_tasks": n_tasks,
-        "max_atoms": max_atoms,
-        "layer_structures": layer_structures,
-        "atom_number_cases": atom_number_cases
+      "n_tasks": n_tasks,
+      "max_atoms": max_atoms,
+      "layer_structures": layer_structures,
+      "atom_number_cases": atom_number_cases
     }
 
     self._kwargs.update(kwargs)
-
+    self.activation = activation
     self.build_graph()
     self.grad = None
 
@@ -183,8 +182,8 @@ class ANIRegression(TensorGraph):
       feed_dict = dict()
       X = dataset.X
       flags = np.sign(np.array(X[:upper_lim, :, 0]))
-      feed_dict[self.atom_flags] = np.stack([flags]*self.max_atoms, axis=2)*\
-          np.stack([flags]*self.max_atoms, axis=1)
+      feed_dict[self.atom_flags] = np.stack([flags] * self.max_atoms, axis=2) * \
+                                   np.stack([flags] * self.max_atoms, axis=1)
       feed_dict[self.atom_numbers] = np.array(X[:upper_lim, :, 0], dtype=int)
       feed_dict[self.atom_feats] = np.array(X[:upper_lim, :, :], dtype=float)
       return self.session.run([self.grad], feed_dict=feed_dict)
@@ -219,7 +218,7 @@ class ANIRegression(TensorGraph):
     Z[:A.shape[0], :A.shape[1]] = A
     X = Z
     dd = dc.data.NumpyDataset(
-        np.array(X).reshape((1, self.max_atoms, 4)), np.array(0), np.array(1))
+      np.array(X).reshape((1, self.max_atoms, 4)), np.array(0), np.array(1))
     return self.predict(dd)[0]
 
   def grad_one(self, X, atomic_nums, constraints=None):
@@ -285,13 +284,13 @@ class ANIRegression(TensorGraph):
     num_atoms = atomic_nums.shape[0]
 
     res = scipy.optimize.minimize(
-        self.pred_one,
-        X,
-        args=(atomic_nums, constraints),
-        jac=self.grad_one,
-        method="BFGS",
-        tol=1e-6,
-        options={'disp': True})
+      self.pred_one,
+      X,
+      args=(atomic_nums, constraints),
+      jac=self.grad_one,
+      method="BFGS",
+      tol=1e-6,
+      options={'disp': True})
 
     return res.x.reshape((num_atoms, 3))
 
@@ -302,18 +301,18 @@ class ANIRegression(TensorGraph):
     self.atom_feats = Feature(shape=(None, self.max_atoms, 4))
 
     previous_layer = ANIFeat(
-        in_layers=self.atom_feats, max_atoms=self.max_atoms)
+      in_layers=self.atom_feats, max_atoms=self.max_atoms)
 
     self.featurized = previous_layer
 
     Hiddens = []
     for n_hidden in self.layer_structures:
       Hidden = AtomicDifferentiatedDense(
-          self.max_atoms,
-          n_hidden,
-          self.atom_number_cases,
-          activation='tanh',
-          in_layers=[previous_layer, self.atom_numbers])
+        self.max_atoms,
+        n_hidden,
+        self.atom_number_cases,
+        activation=self.activation,
+        in_layers=[previous_layer, self.atom_numbers])
       Hiddens.append(Hidden)
       previous_layer = Hiddens[-1]
 
@@ -321,7 +320,7 @@ class ANIRegression(TensorGraph):
     self.labels_fd = []
     for task in range(self.n_tasks):
       regression = Dense(
-          out_channels=1, activation_fn=None, in_layers=[Hiddens[-1]])
+        out_channels=1, activation_fn=None, in_layers=[Hiddens[-1]])
       output = BPGather(self.max_atoms, in_layers=[regression, self.atom_flags])
       self.add_output(output)
 
@@ -357,8 +356,8 @@ class ANIRegression(TensorGraph):
           feed_dict[self.weights] = w_b
 
         flags = np.sign(np.array(X_b[:, :, 0]))
-        feed_dict[self.atom_flags] = np.stack([flags]*self.max_atoms, axis=2)*\
-            np.stack([flags]*self.max_atoms, axis=1)
+        feed_dict[self.atom_flags] = np.stack([flags] * self.max_atoms, axis=2) * \
+                                     np.stack([flags] * self.max_atoms, axis=1)
         feed_dict[self.atom_numbers] = np.array(X_b[:, :, 0], dtype=int)
         feed_dict[self.atom_feats] = np.array(X_b[:, :, :], dtype=float)
         yield feed_dict
@@ -379,7 +378,7 @@ class ANIRegression(TensorGraph):
         save_dict[all_vars[idx].name] = all_vals[idx]
 
       save_dict["_kwargs"] = np.array(
-          [json.dumps(self._kwargs)], dtype=np.string_)
+        [json.dumps(self._kwargs)], dtype=np.string_)
 
       np.savez(path, **save_dict)
 

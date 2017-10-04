@@ -6,7 +6,6 @@ import tensorflow as tf
 import deepchem as dc
 import pyanitools as pya
 import sqlite3
-import sys
 import arrow
 import json
 
@@ -32,7 +31,7 @@ def save_result(exp_id, train_r2, valid_r2, test_r2, train_mae, valid_mae, test_
 
 
 def get_experiment():
-  """'
+  """
   TODO(LESWING) thread safe
   Returns
   -------
@@ -78,8 +77,8 @@ def convert_species_to_atomic_nums(s):
 
 
 # replace with your own scratch directory
-data_dir = "/home/leswing/ANI-1/datasets"
-base_dir = "/home/yzhao/ANI-1_release"
+data_dir = "/media/store/ANI-1/datasets"
+base_dir = "/media/store/ANI-1/raw"
 
 all_dir = os.path.join(data_dir, "all")
 test_dir = os.path.join(data_dir, "test")
@@ -117,13 +116,13 @@ def load_roiterberg_ANI(mode="atomization"):
 
   hdf5files = [
     'ani_gdb_s01.h5',
-    'ani_gdb_s02.h5',
-    'ani_gdb_s03.h5',
-    'ani_gdb_s04.h5',
-    'ani_gdb_s05.h5',
-    'ani_gdb_s06.h5',
-    'ani_gdb_s07.h5',
-    'ani_gdb_s08.h5'
+    # 'ani_gdb_s02.h5',
+    # 'ani_gdb_s03.h5',
+    # 'ani_gdb_s04.h5',
+    # 'ani_gdb_s05.h5',
+    # 'ani_gdb_s06.h5',
+    # 'ani_gdb_s07.h5',
+    # 'ani_gdb_s08.h5'
   ]
 
   hdf5files = [os.path.join(base_dir, f) for f in hdf5files]
@@ -249,7 +248,7 @@ def broadcast(dataset, metadata):
 
 def main(model_dir, exp_id, num_epochs, kwargs):
   max_atoms = 23
-  batch_size = 64  # CHANGED FROM 16
+  batch_size = 8  # CHANGED FROM 16
   layer_structures = [128, 128, 64]
   atom_number_cases = [1, 6, 7, 8]
   if 'activation' in kwargs:
@@ -339,8 +338,6 @@ def save_test():
 
 
 if __name__ == "__main__":
-  oid, model_folder, num_epochs, kwargs_json, status = get_experiment()
-  model_dir = "%s/%s" % ("/home/leswing/ANI-1/models", model_folder)
-  kwargs_json = json.loads(kwargs_json)
-  main(model_dir, oid, num_epochs, kwargs_json)
-  set_exp_finished(oid)
+  # oid, model_folder, num_epochs, kwargs_json, status = get_experiment()
+  # model_dir = "%s/%s" % ("/home/leswing/ANI-1/models", model_folder)
+  main("/home/leswing/Documents/deepchem/contrib/ani/models", 1, 10, {"activation": "gaussian"})
