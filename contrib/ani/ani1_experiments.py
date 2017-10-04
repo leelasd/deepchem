@@ -56,6 +56,18 @@ def get_experiment():
   return l
 
 
+def set_exp_finished(oid):
+  conn = sqlite3.connect('exps.db')
+  c = conn.cursor()
+
+  c.execute("""
+  UPDATE experiment SET status = 'FINISHED' WHERE oid=?
+  """, (oid,))
+
+  conn.commit()
+  conn.close()
+
+
 def convert_species_to_atomic_nums(s):
   PERIODIC_TABLE = {"H": 1, "C": 6, "N": 7, "O": 8}
   res = []
@@ -322,5 +334,6 @@ def save_test():
 
 if __name__ == "__main__":
   oid, model_folder, num_epochs, kwargs_json, status = get_experiment()
-  model_dir = "%s/models" % model_folder
+  model_dir = "%s/%s" % ("/home/leswing/ANI-1/models", model_folder)
   main(model_dir, oid, num_epochs, kwargs_json)
+  set_exp_finished(oid)
