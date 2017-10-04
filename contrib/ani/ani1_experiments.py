@@ -313,8 +313,8 @@ def main(model_dir, exp_id, num_epochs, kwargs):
     valid_dataset = transformer.transform(valid_dataset)
     test_dataset = transformer.transform(test_dataset)
 
-  for i in range(int(num_epochs / 10 + 1)):
-    model.fit(train_dataset, nb_epoch=10, checkpoint_interval=0)
+  for i in range(num_epochs):
+    model.fit(train_dataset, nb_epoch=1, checkpoint_interval=0)
 
     print("Saving model...")
     model.save_numpy()
