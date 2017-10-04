@@ -76,18 +76,11 @@ def convert_species_to_atomic_nums(s):
   return np.array(res, dtype=np.float32)
 
 
-# replace with your own scratch directory
-data_dir = "/media/store/ANI-1/datasets"
 base_dir = "/media/store/ANI-1/raw"
 
-all_dir = os.path.join(data_dir, "all")
-test_dir = os.path.join(data_dir, "test")
-fold_dir = os.path.join(data_dir, "fold")
-train_dir = os.path.join(fold_dir, "train")
-valid_dir = os.path.join(fold_dir, "valid")
 
 
-def load_roiterberg_ANI(mode="atomization"):
+def load_roiterberg_ANI(mode="atomization", data_dir):
   """
   Load the ANI dataset.
 
@@ -247,6 +240,14 @@ def broadcast(dataset, metadata):
 
 
 def main(model_dir, exp_id, num_epochs, kwargs):
+  data_dir = "/media/store/ANI-1/datasets"
+
+  all_dir = os.path.join(data_dir, "all")
+  test_dir = os.path.join(data_dir, "test")
+  fold_dir = os.path.join(data_dir, "fold")
+  train_dir = os.path.join(fold_dir, "train")
+  valid_dir = os.path.join(fold_dir, "valid")
+
   max_atoms = 23
   batch_size = 8  # CHANGED FROM 16
   layer_structures = [128, 128, 64]
@@ -301,6 +302,7 @@ def main(model_dir, exp_id, num_epochs, kwargs):
     activation=activation)
 
   for i in range(int(num_epochs / 10 + 1)):
+    sys.exit()
     model.fit(train_dataset, nb_epoch=10, checkpoint_interval=0)
 
     print("Saving model...")

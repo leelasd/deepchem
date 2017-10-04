@@ -77,23 +77,20 @@ def convert_species_to_atomic_nums(s):
   return np.array(res, dtype=np.float32)
 
 
-# replace with your own scratch directory
-data_dir = "/home/leswing/ANI-1/datasets"
-base_dir = "/home/yzhao/ANI-1_release"
-
-all_dir = os.path.join(data_dir, "all")
-test_dir = os.path.join(data_dir, "test")
-fold_dir = os.path.join(data_dir, "fold")
-train_dir = os.path.join(fold_dir, "train")
-valid_dir = os.path.join(fold_dir, "valid")
+def data_dir_f(kwargs):
+  if "data_length" not in kwargs:
+    return "/home/leswing/ANI-1/datasets"
+  return "/home/leswing/ANI-1/datasets_%s" % kwargs['data_length']
 
 
-def load_roiterberg_ANI(mode="atomization"):
+def load_roiterberg_ANI(data_dir, data_length=None, mode="atomization"):
   """
   Load the ANI dataset.
 
   Parameters
   ----------
+  data_dir : str
+    Directory to store data in
   mode: str
     Accepted modes are "relative", "atomization", or "absolute". These settings are used
     to adjust the dynamic range of the model, with absolute having the greatest and relative
@@ -112,6 +109,10 @@ def load_roiterberg_ANI(mode="atomization"):
   # Number of conformations in each file increases exponentially.
   # Start with a smaller dataset before continuing. Use all of them
   # for production
+  base_dir = json.loads(open('paths.json').read())['raw_dir']
+  all_dir = os.path.join(data_dir, "all")
+  test_dir = os.path.join(data_dir, "test")
+  fold_dir = os.path.join(data_dir, "fold")
   if os.path.isdir(fold_dir) and os.path.isdir(test_dir):
     return dc.data.DiskDataset(fold_dir), dc.data.DiskDataset(test_dir), 598110
 
@@ -125,6 +126,8 @@ def load_roiterberg_ANI(mode="atomization"):
     'ani_gdb_s07.h5',
     'ani_gdb_s08.h5'
   ]
+  if data_length is not None:
+    hdf5files = hdf5files[:data_length]
 
   hdf5files = [os.path.join(base_dir, f) for f in hdf5files]
 
@@ -248,8 +251,18 @@ def broadcast(dataset, metadata):
 
 
 def main(model_dir, exp_id, num_epochs, kwargs):
+  if 'data_length' not in kwargs:
+    data_length = None
+  else:
+    data_length = kwargs['data_length']
+  data_dir = data_dir_f(kwargs)
+
+  fold_dir = os.path.join(data_dir, "fold")
+  train_dir = os.path.join(fold_dir, "train")
+  valid_dir = os.path.join(fold_dir, "valid")
+
   max_atoms = 23
-  batch_size = 64  # CHANGED FROM 16
+  batch_size = json.loads(open('paths.json').read())['batch_size']
   layer_structures = [128, 128, 64]
   atom_number_cases = [1, 6, 7, 8]
   if 'activation' in kwargs:
@@ -274,8 +287,9 @@ def main(model_dir, exp_id, num_epochs, kwargs):
     dc.metrics.Metric(dc.metrics.pearson_r2_score, mode="regression")
   ]
 
-  train_valid_dataset, test_dataset, all_groups = load_roiterberg_ANI(
-    mode="atomization")
+  train_valid_dataset, test_dataset, all_groups = load_roiterberg_ANI(data_dir,
+                                                                      data_length,
+                                                                      mode="atomization")
 
   if os.path.isdir(train_dir) and os.path.isdir(valid_dir):
     train_dataset, valid_dataset = dc.data.DiskDataset(train_dir), dc.data.DiskDataset(valid_dir)
@@ -338,7 +352,7 @@ def save_test():
 
 if __name__ == "__main__":
   oid, model_folder, num_epochs, kwargs_json, status = get_experiment()
-  model_dir = "%s/%s" % ("/home/leswing/ANI-1/models", model_folder)
+  model_dir = "%s/%s" % (json.loads(open('paths.json').read())['models_dir'], model_folder)
   kwargs_json = json.loads(kwargs_json)
   main(model_dir, oid, num_epochs, kwargs_json)
   set_exp_finished(oid)
