@@ -113,7 +113,7 @@ def load_roiterberg_ANI(mode="atomization"):
   # Start with a smaller dataset before continuing. Use all of them
   # for production
   if os.path.isdir(fold_dir) and os.path.isdir(test_dir):
-    return dc.data.DiskDataset(fold_dir), dc.data.DiskDataset(test_dir), 96
+    return dc.data.DiskDataset(fold_dir), dc.data.DiskDataset(test_dir), 598110
 
   hdf5files = [
     'ani_gdb_s01.h5',
@@ -256,13 +256,23 @@ def main(model_dir, exp_id, num_epochs, kwargs):
     activation = kwargs['activation']
   else:
     activation = 'tanh'
+  model = dc.models.ANIRegression(
+    1,
+    max_atoms,
+    layer_structures=layer_structures,
+    atom_number_cases=atom_number_cases,
+    batch_size=batch_size,
+    learning_rate=0.001,
+    use_queue=True,
+    model_dir=model_dir,
+    mode="regression",
+    activation=activation)
+  model.build()
 
   metric = [
     dc.metrics.Metric(dc.metrics.mean_absolute_error, mode="regression"),
     dc.metrics.Metric(dc.metrics.pearson_r2_score, mode="regression")
   ]
-
-  print("Fitting new model...")
 
   train_valid_dataset, test_dataset, all_groups = load_roiterberg_ANI(
     mode="atomization")
@@ -288,18 +298,6 @@ def main(model_dir, exp_id, num_epochs, kwargs):
     train_dataset = transformer.transform(train_dataset)
     valid_dataset = transformer.transform(valid_dataset)
     test_dataset = transformer.transform(test_dataset)
-
-  model = dc.models.ANIRegression(
-    1,
-    max_atoms,
-    layer_structures=layer_structures,
-    atom_number_cases=atom_number_cases,
-    batch_size=batch_size,
-    learning_rate=0.001,
-    use_queue=True,
-    model_dir=model_dir,
-    mode="regression",
-    activation=activation)
 
   for i in range(int(num_epochs / 10 + 1)):
     model.fit(train_dataset, nb_epoch=10, checkpoint_interval=0)
