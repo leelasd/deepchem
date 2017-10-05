@@ -234,6 +234,7 @@ class TensorGraph(Model):
         avg_loss += fetched_values[1]
         n_averaged_batches += 1
         self.global_step += 1
+        print(self.global_step)
         if checkpoint_interval > 0 and self.global_step % checkpoint_interval == checkpoint_interval - 1:
           saver.save(self.session, self.save_file, global_step=self.global_step)
           avg_loss = float(avg_loss) / n_averaged_batches
