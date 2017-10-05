@@ -383,7 +383,7 @@ class ANIRegression(TensorGraph):
       np.savez(path, **save_dict)
 
   @classmethod
-  def load_numpy(cls, model_dir):
+  def load_numpy(cls, model_dir, batch_size=None):
     """
     Load from a portable numpy file.
 
@@ -399,6 +399,8 @@ class ANIRegression(TensorGraph):
     json_blob = npo["_kwargs"][0].decode('UTF-8')
 
     kwargs = json.loads(json_blob)
+    if batch_size is not None:
+      kwargs['batch_size'] = batch_size
 
     obj = cls(**kwargs)
     obj.build()
