@@ -265,10 +265,6 @@ class RandomGroupSplitter(Splitter):
     valid_idxs = list(itertools.chain(*group_idxs[valid_groups]))
     test_idxs = list(itertools.chain(*group_idxs[test_groups]))
 
-    random.shuffle(train_idxs)
-    random.shuffle(valid_idxs)
-    random.shuffle(test_idxs)
-
     return train_idxs, valid_idxs, test_idxs
 
 
