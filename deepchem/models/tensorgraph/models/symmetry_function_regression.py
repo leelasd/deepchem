@@ -132,17 +132,18 @@ class ANIRegression(TensorGraph):
     self.layer_structures = layer_structures
     self.atom_number_cases = atom_number_cases
     super(ANIRegression, self).__init__(**kwargs)
+    self.activation = activation
 
     # (ytz): this is really dirty but needed for restoring models
     self._kwargs = {
       "n_tasks": n_tasks,
       "max_atoms": max_atoms,
       "layer_structures": layer_structures,
-      "atom_number_cases": atom_number_cases
+      "atom_number_cases": atom_number_cases,
+      "activation": self.activation
     }
 
     self._kwargs.update(kwargs)
-    self.activation = activation
     self.build_graph()
     self.grad = None
 

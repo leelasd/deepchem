@@ -24,6 +24,7 @@ from deepchem.utils import ScaffoldGenerator
 from deepchem.utils.save import log
 from deepchem.data import NumpyDataset
 from deepchem.utils.save import load_data
+import random
 
 
 def generate_scaffold(smiles, include_chirality=False):
@@ -263,6 +264,10 @@ class RandomGroupSplitter(Splitter):
     train_idxs = list(itertools.chain(*group_idxs[train_groups]))
     valid_idxs = list(itertools.chain(*group_idxs[valid_groups]))
     test_idxs = list(itertools.chain(*group_idxs[test_groups]))
+
+    random.shuffle(train_idxs)
+    random.shuffle(valid_idxs)
+    random.shuffle(test_idxs)
 
     return train_idxs, valid_idxs, test_idxs
 
