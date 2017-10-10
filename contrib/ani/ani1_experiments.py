@@ -325,11 +325,7 @@ def main(model_dir, exp_id, num_epochs, kwargs):
     print("Performing 1-fold split...")
     train_dataset, valid_dataset = splitter.train_test_split(
       train_valid_dataset, train_dir=train_dir, test_dir=valid_dir)
-    train_dataset = dc.data.NumpyDataset.from_DiskDataset(train_dataset)
-    train_dataset.shuffle()
-    shutil.rmtree(train_dir)
-    train_dataset = dc.data.DiskDataset.from_numpy(train_dataset.X, train_dataset.y, train_dataset.w, train_dataset.ids,
-                                                   data_dir=train_dir)
+    train_dataset.reshard(10000000000000)
 
   transformers = [
     dc.trans.NormalizationTransformer(
