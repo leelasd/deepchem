@@ -15,7 +15,7 @@ import tensorflow as tf
 
 import deepchem as dc
 
-from deepchem.models.tensorgraph.layers import Dense, Concat, WeightedError, Stack, Layer, ANIFeat
+from deepchem.models.tensorgraph.layers import Dense, Concat, WeightedError, Stack, Layer, ANIFeat, Dropout
 from deepchem.models.tensorgraph.layers import L2Loss, Label, Weights, Feature
 from deepchem.models.tensorgraph.tensor_graph import TensorGraph
 from deepchem.models.tensorgraph.graph_layers import DTNNEmbedding
@@ -117,6 +117,7 @@ class ANIRegression(TensorGraph):
                atom_number_cases=[1, 6, 7, 8, 16],
                activation='tanh',
                batch_norms=[False, False],
+               dropouts=[0.0, 0.0, 0.0],
                **kwargs):
     """
     Parameters
@@ -135,6 +136,7 @@ class ANIRegression(TensorGraph):
     super(ANIRegression, self).__init__(**kwargs)
     self.activation = activation
     self.batch_norms = batch_norms
+    self.dropouts = dropouts
 
     # (ytz): this is really dirty but needed for restoring models
     self._kwargs = {
@@ -143,7 +145,8 @@ class ANIRegression(TensorGraph):
       "layer_structures": layer_structures,
       "atom_number_cases": atom_number_cases,
       "activation": self.activation,
-      "batch_norms": self.batch_norms
+      "batch_norms": self.batch_norms,
+      "dropouts": self.dropouts
     }
 
     self._kwargs.update(kwargs)
@@ -306,6 +309,7 @@ class ANIRegression(TensorGraph):
 
     previous_layer = ANIFeat(
       in_layers=self.atom_feats, max_atoms=self.max_atoms)
+    previous_layer = Dropout(self.dropouts[0], in_layers=[previous_layer])
 
     self.featurized = previous_layer
 
@@ -320,6 +324,7 @@ class ANIRegression(TensorGraph):
         activation=self.activation,
         in_layers=[previous_layer, self.atom_numbers],
         is_batch_norm=is_bn)
+      Hidden = Dropout(self.dropouts[i + 1], in_layers=Hidden)
       Hiddens.append(Hidden)
       previous_layer = Hiddens[-1]
 

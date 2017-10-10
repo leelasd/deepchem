@@ -39,48 +39,105 @@ c = conn.cursor()
 # ''', (kwargs_json,))
 
 
+# d = {
+#   'activation': 'relu',
+#   'data_length': 4,
+#   'batch_norms': [False, True, True]
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('batch_normftt_relu_gdb4', 10000, ?, 'READY')
+# ''', (kwargs_json,))
+#
+# d = {
+#   'activation': 'elu',
+#   'data_length': 4,
+#   'batch_norms': [False, True, True]
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('batch_normftt_elu_4', 10000, ?, 'READY')
+# ''', (kwargs_json,))
+#
+# d = {
+#   'activation': 'relu',
+#   'data_length': 4,
+#   'batch_norms': [True, True, True]
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('batch_normttt_relu_gdb4', 10000, ?, 'READY')
+# ''', (kwargs_json,))
+#
+# d = {
+#   'activation': 'relu',
+#   'data_length': 4,
+#   'batch_norms': [False, False, True]
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('batch_normfft_relu_gdb4', 10000, ?, 'READY')
+# ''', (kwargs_json,))
+
 d = {
   'activation': 'relu',
   'data_length': 4,
-  'batch_norms': [False, True, True]
+  'dropouts': [0.9, 0.5, 0.5, 0.5]
 }
 kwargs_json = json.dumps(d)
 c.execute('''
 INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('batch_normftt_relu_gdb4', 10000, ?, 'READY')
-''', (kwargs_json,))
-
-d = {
-  'activation': 'elu',
-  'data_length': 4,
-  'batch_norms': [False, True, True]
-}
-kwargs_json = json.dumps(d)
-c.execute('''
-INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('batch_normftt_elu_4', 10000, ?, 'READY')
+VALUES ('dropout_9,5,5,5_relu_gdb4', 10000, ?, 'READY')
 ''', (kwargs_json,))
 
 d = {
   'activation': 'relu',
   'data_length': 4,
-  'batch_norms': [True, True, True]
+  'dropouts': [0.0, 0.5, 0.5, 0.5]
 }
 kwargs_json = json.dumps(d)
 c.execute('''
 INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('batch_normttt_relu_gdb4', 10000, ?, 'READY')
+VALUES ('dropout_0,5,5,5_relu_gdb4', 10000, ?, 'READY')
 ''', (kwargs_json,))
 
 d = {
   'activation': 'relu',
   'data_length': 4,
-  'batch_norms': [False, False, True]
+  'dropouts': [0.9, 0.5, 0.5, 0.5],
+  'layer_structures': [160, 160, 80]
 }
 kwargs_json = json.dumps(d)
 c.execute('''
 INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('batch_normfft_relu_gdb4', 10000, ?, 'READY')
+VALUES ('dropout_1.25layer_9,5,5,5_relu_gdb4', 10000, ?, 'READY')
+''', (kwargs_json,))
+
+d = {
+  'activation': 'relu',
+  'data_length': 4,
+  'dropouts': [0.9, 0.5, 0.5, 0.5],
+  'layer_structures': [192, 192, 128]
+}
+kwargs_json = json.dumps(d)
+c.execute('''
+INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+VALUES ('dropout_1.5layer_9,5,5,5_relu_gdb4', 10000, ?, 'READY')
+''', (kwargs_json,))
+
+d = {
+  'activation': 'gaussian',
+  'data_length': 4,
+  'dropouts': [0.0, 0.5, 0.5, 0.5]
+}
+kwargs_json = json.dumps(d)
+c.execute('''
+INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+VALUES ('dropout_0,5,5,5_gaussian_gdb4', 10000, ?, 'READY')
 ''', (kwargs_json,))
 
 conn.commit()

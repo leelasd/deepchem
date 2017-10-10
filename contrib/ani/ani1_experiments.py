@@ -274,6 +274,16 @@ def main(model_dir, exp_id, num_epochs, kwargs):
   else:
     batch_norms = [False, False, False]
 
+  if 'dropouts' in kwargs:
+    dropouts = kwargs['dropouts']
+  else:
+    dropouts = [0.0, 0.0, 0.0, 0.0]
+
+  if 'layer_structures' in kwargs:
+    layer_structures = kwargs['layer_structures']
+  else:
+    layer_structures = [128, 128, 64]
+
   if os.path.exists(os.path.join(model_dir, "save_pickle.npz")):
     model = dc.models.ANIRegression.load_numpy(model_dir, batch_size)
     print("loaded from dir")
@@ -289,7 +299,8 @@ def main(model_dir, exp_id, num_epochs, kwargs):
       model_dir=model_dir,
       mode="regression",
       activation=activation,
-      batch_norms=batch_norms)
+      batch_norms=batch_norms,
+      dropouts=dropouts)
     model.build()
 
   metric = [
