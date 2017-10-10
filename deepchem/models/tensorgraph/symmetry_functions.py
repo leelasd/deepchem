@@ -445,16 +445,14 @@ class AtomicDifferentiatedDense(Layer):
       mask = 1 - tf.to_float(tf.cast(atom_numbers - atom_case, tf.bool))
       output = tf.reshape(output * tf.expand_dims(mask, 2), (-1, self.max_atoms,
                                                              self.out_channels))
-      if self.is_batch_norm:
-        epsilon = 1e-3
-        bm, bv = tf.nn.moments(output, [0, 1, 2])
-        bm, bv = tf.fill([self.out_channels], bm), tf.fill([self.out_channels], bv)
-        scale = tf.Variable(tf.ones([self.out_channels]))
-        beta = tf.Variable(tf.zeros([self.out_channels]))
-        output = tf.nn.batch_normalization(output, bm, bv, beta, scale, epsilon)
-
       outputs.append(output)
     self.out_tensor = tf.add_n(outputs)
+    if self.is_batch_norm:
+        epsilon = 1e-3
+        bm, bv = tf.nn.moments(self.out_tensor, [0, 1])
+        scale = tf.Variable(tf.ones([self.out_channels]))
+        beta = tf.Variable(tf.zeros([self.out_channels]))
+        self.out_tensor = tf.nn.batch_normalization(self.out_tensor, bm, bv, beta, scale, epsilon)
 
   def none_tensors(self):
     w, b, out_tensor = self.W, self.b, self.out_tensor
