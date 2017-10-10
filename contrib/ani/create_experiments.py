@@ -83,61 +83,94 @@ c = conn.cursor()
 # VALUES ('batch_normfft_relu_gdb4', 10000, ?, 'READY')
 # ''', (kwargs_json,))
 
-d = {
-  'activation': 'relu',
-  'data_length': 4,
-  'dropouts': [0.9, 0.5, 0.5, 0.5]
-}
-kwargs_json = json.dumps(d)
-c.execute('''
-INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('dropout_9,5,5,5_relu_gdb4', 10000, ?, 'READY')
-''', (kwargs_json,))
+# d = {
+#   'activation': 'relu',
+#   'data_length': 4,
+#   'dropouts': [0.9, 0.5, 0.5, 0.5]
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('dropout_9,5,5,5_relu_gdb4', 10000, ?, 'READY')
+# ''', (kwargs_json,))
+#
+# d = {
+#   'activation': 'relu',
+#   'data_length': 4,
+#   'dropouts': [0.0, 0.5, 0.5, 0.5]
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('dropout_0,5,5,5_relu_gdb4', 10000, ?, 'READY')
+# ''', (kwargs_json,))
+#
+# d = {
+#   'activation': 'relu',
+#   'data_length': 4,
+#   'dropouts': [0.9, 0.5, 0.5, 0.5],
+#   'layer_structures': [160, 160, 80]
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('dropout_1.25layer_9,5,5,5_relu_gdb4', 10000, ?, 'READY')
+# ''', (kwargs_json,))
+#
+# d = {
+#   'activation': 'relu',
+#   'data_length': 4,
+#   'dropouts': [0.9, 0.5, 0.5, 0.5],
+#   'layer_structures': [192, 192, 128]
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('dropout_1.5layer_9,5,5,5_relu_gdb4', 10000, ?, 'READY')
+# ''', (kwargs_json,))
+#
+# d = {
+#   'activation': 'gaussian',
+#   'data_length': 4,
+#   'dropouts': [0.0, 0.5, 0.5, 0.5]
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('dropout_0,5,5,5_gaussian_gdb4', 10000, ?, 'READY')
+# ''', (kwargs_json,))
 
 d = {
-  'activation': 'relu',
+  'activation': 'gaussian',
   'data_length': 4,
-  'dropouts': [0.0, 0.5, 0.5, 0.5]
+  'learning_rate': 0.01
 }
 kwargs_json = json.dumps(d)
 c.execute('''
 INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('dropout_0,5,5,5_relu_gdb4', 10000, ?, 'READY')
-''', (kwargs_json,))
-
-d = {
-  'activation': 'relu',
-  'data_length': 4,
-  'dropouts': [0.9, 0.5, 0.5, 0.5],
-  'layer_structures': [160, 160, 80]
-}
-kwargs_json = json.dumps(d)
-c.execute('''
-INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('dropout_1.25layer_9,5,5,5_relu_gdb4', 10000, ?, 'READY')
-''', (kwargs_json,))
-
-d = {
-  'activation': 'relu',
-  'data_length': 4,
-  'dropouts': [0.9, 0.5, 0.5, 0.5],
-  'layer_structures': [192, 192, 128]
-}
-kwargs_json = json.dumps(d)
-c.execute('''
-INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('dropout_1.5layer_9,5,5,5_relu_gdb4', 10000, ?, 'READY')
+VALUES ('learning_rate_1', 10000, ?, 'READY')
 ''', (kwargs_json,))
 
 d = {
   'activation': 'gaussian',
   'data_length': 4,
-  'dropouts': [0.0, 0.5, 0.5, 0.5]
+  'learning_rate': 0.0005
 }
 kwargs_json = json.dumps(d)
 c.execute('''
 INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('dropout_0,5,5,5_gaussian_gdb4', 10000, ?, 'READY')
+VALUES ('learning_rate_1', 10000, ?, 'READY')
+''', (kwargs_json,))
+
+d = {
+  'activation': 'gaussian',
+  'data_length': 4,
+  'learning_rate': 0.0001
+}
+kwargs_json = json.dumps(d)
+c.execute('''
+INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+VALUES ('learning_rate_1', 10000, ?, 'READY')
 ''', (kwargs_json,))
 
 conn.commit()

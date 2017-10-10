@@ -262,7 +262,6 @@ def main(model_dir, exp_id, num_epochs, kwargs):
 
   max_atoms = 23
   batch_size = json.loads(open('paths.json').read())['batch_size']
-  layer_structures = [128, 128, 64]
   atom_number_cases = [1, 6, 7, 8]
   if 'activation' in kwargs:
     activation = kwargs['activation']
@@ -284,6 +283,11 @@ def main(model_dir, exp_id, num_epochs, kwargs):
   else:
     layer_structures = [128, 128, 64]
 
+  if 'learning_rate' in kwargs:
+    learning_rate = kwargs['learning_rate']
+  else:
+    learning_rate = 0.001
+
   if os.path.exists(os.path.join(model_dir, "save_pickle.npz")):
     model = dc.models.ANIRegression.load_numpy(model_dir, batch_size)
     print("loaded from dir")
@@ -294,7 +298,7 @@ def main(model_dir, exp_id, num_epochs, kwargs):
       layer_structures=layer_structures,
       atom_number_cases=atom_number_cases,
       batch_size=batch_size,
-      learning_rate=0.001,
+      learning_rate=learning_rate,
       use_queue=True,
       model_dir=model_dir,
       mode="regression",
