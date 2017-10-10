@@ -116,6 +116,7 @@ class ANIRegression(TensorGraph):
                layer_structures=[128, 64],
                atom_number_cases=[1, 6, 7, 8, 16],
                activation='tanh',
+               batch_norms=[False, False],
                **kwargs):
     """
     Parameters
@@ -133,6 +134,7 @@ class ANIRegression(TensorGraph):
     self.atom_number_cases = atom_number_cases
     super(ANIRegression, self).__init__(**kwargs)
     self.activation = activation
+    self.batch_norms = batch_norms
 
     # (ytz): this is really dirty but needed for restoring models
     self._kwargs = {
@@ -140,7 +142,8 @@ class ANIRegression(TensorGraph):
       "max_atoms": max_atoms,
       "layer_structures": layer_structures,
       "atom_number_cases": atom_number_cases,
-      "activation": self.activation
+      "activation": self.activation,
+      "batch_norms": self.batch_norms
     }
 
     self._kwargs.update(kwargs)
@@ -307,13 +310,16 @@ class ANIRegression(TensorGraph):
     self.featurized = previous_layer
 
     Hiddens = []
-    for n_hidden in self.layer_structures:
+    for i in range(len(self.layer_structures)):
+      n_hidden = self.layer_structures[i]
+      is_bn = self.batch_norms[i]
       Hidden = AtomicDifferentiatedDense(
         self.max_atoms,
         n_hidden,
         self.atom_number_cases,
         activation=self.activation,
-        in_layers=[previous_layer, self.atom_numbers])
+        in_layers=[previous_layer, self.atom_numbers],
+        is_batch_norm=is_bn)
       Hiddens.append(Hidden)
       previous_layer = Hiddens[-1]
 

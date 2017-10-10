@@ -268,6 +268,12 @@ def main(model_dir, exp_id, num_epochs, kwargs):
     activation = kwargs['activation']
   else:
     activation = 'tanh'
+
+  if 'batch_norms' in kwargs:
+    batch_norms = kwargs['batch_norms']
+  else:
+    batch_norms = [False, False, False]
+
   if os.path.exists(os.path.join(model_dir, "save_pickle.npz")):
     model = dc.models.ANIRegression.load_numpy(model_dir, batch_size)
     print("loaded from dir")
@@ -282,7 +288,8 @@ def main(model_dir, exp_id, num_epochs, kwargs):
       use_queue=True,
       model_dir=model_dir,
       mode="regression",
-      activation=activation)
+      activation=activation,
+      batch_norms=batch_norms)
     model.build()
 
   metric = [
