@@ -809,6 +809,20 @@ class DiskDataset(Dataset):
 
     return DiskDataset.create_dataset(generator(), data_dir=merge_dir)
 
+  def shuffle(self, merge_dir=None, shard_size=4096 * 64):
+    ids = self.ids.tolist()
+    random.shuffle(ids)
+
+    def chunks(l, n):
+      """Yield successive n-sized chunks from l."""
+      for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+    datasets = []
+    for chunk in chunks(ids, shard_size):
+      datasets.append(self.select(chunk))
+    return DiskDataset.merge(datasets, merge_dir=merge_dir)
+
   def subset(self, shard_nums, subset_dir=None):
     """Creates a subset of the original dataset on disk."""
     if subset_dir is not None:
