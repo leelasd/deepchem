@@ -159,7 +159,7 @@ d = {
 kwargs_json = json.dumps(d)
 c.execute('''
 INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('learning_rate_1', 10000, ?, 'READY')
+VALUES ('learning_rate_2', 10000, ?, 'READY')
 ''', (kwargs_json,))
 
 d = {
@@ -170,7 +170,7 @@ d = {
 kwargs_json = json.dumps(d)
 c.execute('''
 INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('learning_rate_1', 10000, ?, 'READY')
+VALUES ('learning_rate_3', 10000, ?, 'READY')
 ''', (kwargs_json,))
 
 conn.commit()
