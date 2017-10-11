@@ -318,6 +318,7 @@ def main(model_dir, exp_id, num_epochs, kwargs):
 
   if os.path.isdir(train_dir) and os.path.isdir(valid_dir):
     train_dataset, valid_dataset = dc.data.DiskDataset(train_dir), dc.data.DiskDataset(valid_dir)
+    train_dataset.tasks = valid_dataset.tasks
   else:
     splitter = dc.splits.RandomGroupSplitter(
       broadcast(train_valid_dataset, all_groups))
