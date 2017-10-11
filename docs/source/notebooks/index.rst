@@ -16,14 +16,17 @@ them in Jupyter::
 
 .. toctree::
    :maxdepth: 2
-   :titlesonly:
    :caption: DeepChem Tutorials
 
-   BACE 
+   BACE.ipynb
    graph_convolutional_networks_for_tox21
-   mnist 
+   mnist
    Multitask_Networks_on_MUV 
    dataset_preparation
+   TensorGraph_Mechanics
+   seqtoseq_fingerprint
+   solubility
+   Conditional_GAN
 
 
 Contributing tutorials 

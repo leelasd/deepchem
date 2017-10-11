@@ -32,13 +32,12 @@ sys.path.insert(0, os.path.abspath("../sphinxext"))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest',
+    'nbsphinx', 'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest',
     'sphinx.ext.intersphinx', 'sphinx.ext.coverage', 'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig', 'numpydoc', 'sphinx.ext.viewcode',
-    'notebook_sphinxext'
+    'sphinx.ext.ifconfig', 'numpydoc', 'sphinx.ext.viewcode'
 ]
 
-autosummary_generate = True
+autosummary_generate = False
 autodoc_default_flags = ['members', 'inherited-members']
 numpydoc_class_members_toctree = False
 
@@ -48,7 +47,7 @@ templates_path = ['_templates']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+# source_suffix = ['.rst', '.ipynb']
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
