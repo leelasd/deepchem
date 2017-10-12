@@ -15,7 +15,7 @@ import tensorflow as tf
 
 import deepchem as dc
 
-from deepchem.models.tensorgraph.layers import Dense, Concat, WeightedError, Stack, Layer, ANIFeat, Dropout
+from deepchem.models.tensorgraph.layers import Dense, Concat, WeightedError, Stack, Layer, ANIFeat, Dropout, T_EXP
 from deepchem.models.tensorgraph.layers import L2Loss, Label, Weights, Feature
 from deepchem.models.tensorgraph.tensor_graph import TensorGraph
 from deepchem.models.tensorgraph.graph_layers import DTNNEmbedding
@@ -118,6 +118,7 @@ class ANIRegression(TensorGraph):
                activation='tanh',
                batch_norms=[False, False],
                dropouts=[0.0, 0.0, 0.0],
+               loss_fn="L2",
                **kwargs):
     """
     Parameters
@@ -137,6 +138,7 @@ class ANIRegression(TensorGraph):
     self.activation = activation
     self.batch_norms = batch_norms
     self.dropouts = dropouts
+    self.loss_fn = loss_fn
 
     # (ytz): this is really dirty but needed for restoring models
     self._kwargs = {
@@ -146,7 +148,8 @@ class ANIRegression(TensorGraph):
       "atom_number_cases": atom_number_cases,
       "activation": self.activation,
       "batch_norms": self.batch_norms,
-      "dropouts": self.dropouts
+      "dropouts": self.dropouts,
+      "loss_fn": self.loss_fn
     }
 
     self._kwargs.update(kwargs)
@@ -339,6 +342,8 @@ class ANIRegression(TensorGraph):
       label = Label(shape=(None, 1))
       self.labels_fd.append(label)
       cost = L2Loss(in_layers=[label, output])
+      if self.loss_fn == "t_exp":
+        cost = T_EXP(0.5, in_layers=cost)
       costs.append(cost)
 
     all_cost = Stack(in_layers=costs, axis=1)

@@ -195,25 +195,25 @@ c = conn.cursor()
 
 d = {
   'activation': 'gaussian',
-  'data_length': 8,
-  'learning_rate': 0.0001
+  'data_length': 4,
+  'loss_fn': 't_exp'
 }
 kwargs_json = json.dumps(d)
 c.execute('''
 INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('gaussian_lr2_gdb8', 10000, ?, 'READY')
+VALUES ('gaussian_explossfn_gdb8', 10000, ?, 'READY')
 ''', (kwargs_json,))
-
-d = {
-  'activation': 'gaussian',
-  'data_length': 8,
-  'learning_rate': 0.00003
-}
-kwargs_json = json.dumps(d)
-c.execute('''
-INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
-VALUES ('gaussian_lr3_gdb8', 10000, ?, 'READY')
-''', (kwargs_json,))
+#
+# d = {
+#   'activation': 'gaussian',
+#   'data_length': 8,
+#   'learning_rate': 0.00003
+# }
+# kwargs_json = json.dumps(d)
+# c.execute('''
+# INSERT INTO experiment (model_folder, num_epochs, kwargs_json, status)
+# VALUES ('gaussian_lr3_gdb8', 10000, ?, 'READY')
+# ''', (kwargs_json,))
 
 conn.commit()
 conn.close()

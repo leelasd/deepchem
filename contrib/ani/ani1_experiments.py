@@ -288,6 +288,11 @@ def main(model_dir, exp_id, num_epochs, kwargs):
   else:
     learning_rate = 0.001
 
+  if 'loss_fn' in kwargs:
+    loss_fn = kwargs['loss_fn']
+  else:
+    loss_fn = 'L2'
+
   if os.path.exists(os.path.join(model_dir, "save_pickle.npz")):
     model = dc.models.ANIRegression.load_numpy(model_dir, batch_size)
     print("loaded from dir")
@@ -304,7 +309,8 @@ def main(model_dir, exp_id, num_epochs, kwargs):
       mode="regression",
       activation=activation,
       batch_norms=batch_norms,
-      dropouts=dropouts)
+      dropouts=dropouts,
+      loss_fn=loss_fn)
     model.build()
 
   metric = [
