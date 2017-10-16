@@ -293,6 +293,11 @@ def main(model_dir, exp_id, num_epochs, kwargs):
   else:
     loss_fn = 'L2'
 
+  if 'max_norms' in kwargs:
+    max_norms = kwargs['max_norms']
+  else:
+    max_norms = [False, False, False]
+
   if os.path.exists(os.path.join(model_dir, "save_pickle.npz")):
     model = dc.models.ANIRegression.load_numpy(model_dir, batch_size)
     print("loaded from dir")
@@ -310,7 +315,8 @@ def main(model_dir, exp_id, num_epochs, kwargs):
       activation=activation,
       batch_norms=batch_norms,
       dropouts=dropouts,
-      loss_fn=loss_fn)
+      loss_fn=loss_fn,
+      max_norms=max_norms)
     model.build()
 
   metric = [

@@ -379,6 +379,30 @@ class Conv1D(Layer):
     return out_tensor
 
 
+class MaxNormDense(Layer):
+  def __init__(self, out_channels, activation_fn=None, **kwargs):
+    self.activation_fn = activation_fn
+    self.out_channels = out_channels
+    super(MaxNormDense, self).__init__(**kwargs)
+
+  def create_tensor(self, in_layers=None, set_tensors=True, **kwargs):
+    inputs = self._get_input_tensors(in_layers)
+    if len(inputs) != 1:
+      raise ValueError("Conv1D layer must have exactly one parent")
+    parent = inputs[0]
+    w = tf.contrib.layers.variance_scaling_initializer()([parent.get_shape()[-1].value, self.out_channels])
+    w = tf.clip_by_value(w, -3, 3)
+    b = tf.Variable(tf.zeros([self.out_channels]), dtype=tf.float32)
+    out_tensor = tf.nn.xw_plus_b(parent, w, b)
+    if self.activation_fn is not None:
+      out_tensor = activations.get(self.activation_fn)(out_tensor)
+
+    if set_tensors:
+      self._record_variable_scope(self.name)
+      self.out_tensor = out_tensor
+    return out_tensor
+
+
 class Dense(Layer):
   def __init__(
       self,
@@ -885,7 +909,8 @@ class T_EXP(Layer):
     if len(inputs) != 1:
       raise ValueError("Generic Error")
     parent = inputs[0]
-    out_tensor = self.t * tf.exp(parent * (1.0 / self.t))
+    out_tensor = tf.exp(tf.multiply(parent, (1.0 / self.t)))
+    out_tensor = tf.multiply(self.t, out_tensor)
     if set_tensors:
       self.out_tensor = out_tensor
     return out_tensor

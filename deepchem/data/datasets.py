@@ -823,6 +823,7 @@ class DiskDataset(Dataset):
       datasets.append(self.select(chunk))
     ds = DiskDataset.merge(datasets, merge_dir=merge_dir)
     ds.tasks = self.tasks
+    return ds
 
   def subset(self, shard_nums, subset_dir=None):
     """Creates a subset of the original dataset on disk."""

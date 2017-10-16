@@ -119,6 +119,7 @@ class ANIRegression(TensorGraph):
                batch_norms=[False, False],
                dropouts=[0.0, 0.0, 0.0],
                loss_fn="L2",
+               max_norms=[False, False],
                **kwargs):
     """
     Parameters
@@ -139,6 +140,7 @@ class ANIRegression(TensorGraph):
     self.batch_norms = batch_norms
     self.dropouts = dropouts
     self.loss_fn = loss_fn
+    self.max_norms = max_norms
 
     # (ytz): this is really dirty but needed for restoring models
     self._kwargs = {
@@ -149,7 +151,8 @@ class ANIRegression(TensorGraph):
       "activation": self.activation,
       "batch_norms": self.batch_norms,
       "dropouts": self.dropouts,
-      "loss_fn": self.loss_fn
+      "loss_fn": self.loss_fn,
+      "max_norms": self.max_norms
     }
 
     self._kwargs.update(kwargs)
@@ -320,13 +323,15 @@ class ANIRegression(TensorGraph):
     for i in range(len(self.layer_structures)):
       n_hidden = self.layer_structures[i]
       is_bn = self.batch_norms[i]
+      is_mn = self.max_norms[i]
       Hidden = AtomicDifferentiatedDense(
         self.max_atoms,
         n_hidden,
         self.atom_number_cases,
         activation=self.activation,
         in_layers=[previous_layer, self.atom_numbers],
-        is_batch_norm=is_bn)
+        is_batch_norm=is_bn,
+        is_max_norm=is_mn)
       Hidden = Dropout(self.dropouts[i + 1], in_layers=Hidden)
       Hiddens.append(Hidden)
       previous_layer = Hiddens[-1]
