@@ -141,6 +141,8 @@ class ANIRegression(TensorGraph):
     self.dropouts = dropouts
     self.loss_fn = loss_fn
     self.max_norms = max_norms
+    if len(self.max_norms) != len(self.batch_norms):
+      self.max_norms = [False] * len(batch_norms)
 
     # (ytz): this is really dirty but needed for restoring models
     self._kwargs = {
