@@ -80,8 +80,8 @@ def convert_species_to_atomic_nums(s):
 
 def data_dir_f(kwargs):
   if "data_length" not in kwargs:
-    return "/home/leswing/ANI-1/datasets"
-  return "/home/leswing/ANI-1/datasets_%s" % kwargs['data_length']
+    return "/home/kleswing/ANI-1/datasets"
+  return "/home/kleswing/ANI-1/datasets_%s" % kwargs['data_length']
 
 def feat_dir_f(kwargs):
   base_dir = json.loads(open('paths.json').read())['feat_dir']
