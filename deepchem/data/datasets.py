@@ -380,6 +380,14 @@ class NumpyDataset(Dataset):
     newx, newy, neww = fn(self._X, self._y, self._w)
     return NumpyDataset(newx, newy, neww, self._ids[:])
 
+  def shuffle(self):
+    ids = [x for x in range(self._X.shape[0])]
+    random.shuffle(ids)
+    self._X = self.X[ids]
+    self._y = self.y[ids]
+    self._w = self.w[ids]
+    self._ids = self.ids[ids]
+
   def select(self, indices, select_dir=None):
     """Creates a new dataset from a selection of indices from self.
 
@@ -853,6 +861,22 @@ class DiskDataset(Dataset):
         yield (X, y, w, ids)
 
     return DiskDataset.create_dataset(generator(), data_dir=merge_dir)
+
+  def shuffle(self, merge_dir=None, shard_size=4096 * 64):
+    ids = self.ids.tolist()
+    random.shuffle(ids)
+
+    def chunks(l, n):
+      """Yield successive n-sized chunks from l."""
+      for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+    datasets = []
+    for chunk in chunks(ids, shard_size):
+      datasets.append(self.select(chunk))
+    ds = DiskDataset.merge(datasets, merge_dir=merge_dir)
+    ds.tasks = self.tasks
+    return ds
 
   def subset(self, shard_nums, subset_dir=None):
     """Creates a subset of the original dataset on disk."""

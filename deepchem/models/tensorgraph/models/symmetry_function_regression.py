@@ -26,12 +26,11 @@ from deepchem.models.tensorgraph.layers import L2Loss, Conditional, Reshape, Lab
 from deepchem.models.tensorgraph.tensor_graph import TensorGraph
 from deepchem.models.tensorgraph.graph_layers import DTNNEmbedding
 from deepchem.models.tensorgraph.symmetry_functions import DistanceMatrix, \
-    DistanceCutoff, RadialSymmetry, AngularSymmetry, AngularSymmetryMod, \
-    BPFeatureMerge, BPGather, AtomicDifferentiatedDense
+  DistanceCutoff, RadialSymmetry, AngularSymmetry, AngularSymmetryMod, \
+  BPFeatureMerge, BPGather, AtomicDifferentiatedDense
 
 
 class BPSymmetryFunctionRegression(TensorGraph):
-
   def __init__(self,
                n_tasks,
                max_atoms,
@@ -65,9 +64,9 @@ class BPSymmetryFunctionRegression(TensorGraph):
     Hiddens = []
     for n_hidden in self.layer_structures:
       Hidden = Dense(
-          out_channels=n_hidden,
-          activation_fn=tf.nn.tanh,
-          in_layers=[previous_layer])
+        out_channels=n_hidden,
+        activation_fn=tf.nn.tanh,
+        in_layers=[previous_layer])
       Hiddens.append(Hidden)
       previous_layer = Hiddens[-1]
 
@@ -75,7 +74,7 @@ class BPSymmetryFunctionRegression(TensorGraph):
     self.labels_fd = []
     for task in range(self.n_tasks):
       regression = Dense(
-          out_channels=1, activation_fn=None, in_layers=[Hiddens[-1]])
+        out_channels=1, activation_fn=None, in_layers=[Hiddens[-1]])
       output = BPGather(self.max_atoms, in_layers=[regression, self.atom_flags])
       self.add_output(output)
 
@@ -110,20 +109,24 @@ class BPSymmetryFunctionRegression(TensorGraph):
           feed_dict[self.weights] = w_b
 
         flags = np.sign(np.array(X_b[:, :, 0]))
-        feed_dict[self.atom_flags] = np.stack([flags]*self.max_atoms, axis=2)*\
-            np.stack([flags]*self.max_atoms, axis=1)
+        feed_dict[self.atom_flags] = np.stack([flags] * self.max_atoms, axis=2) * \
+                                     np.stack([flags] * self.max_atoms, axis=1)
         feed_dict[self.atom_feats] = np.array(X_b[:, :, 1:], dtype=float)
         yield feed_dict
 
 
 class ANIRegression(TensorGraph):
-
   def __init__(self,
                n_tasks,
                max_atoms,
                layer_structures=[128, 64],
                atom_number_cases=[1, 6, 7, 8],
                feat_dir=None,
+               activation='tanh',
+               batch_norms=[False, False],
+               dropouts=[0.0, 0.0, 0.0],
+               loss_fn="L2",
+               max_norms=[False, False],
                **kwargs):
     """
     Parameters
@@ -142,18 +145,29 @@ class ANIRegression(TensorGraph):
     self.feat_dir = feat_dir
     self.feat_dataset = None
     super(ANIRegression, self).__init__(**kwargs)
+    self.activation = activation
+    self.batch_norms = batch_norms
+    self.dropouts = dropouts
+    self.loss_fn = loss_fn
+    self.max_norms = max_norms
+    if len(self.max_norms) != len(self.batch_norms):
+      self.max_norms = [False] * len(batch_norms)
 
     # (ytz): this is really dirty but needed for restoring models
     self._kwargs = {
-        "n_tasks": n_tasks,
-        "max_atoms": max_atoms,
-        "layer_structures": layer_structures,
-        "atom_number_cases": atom_number_cases,
-        "feat_dir": feat_dir
+      "n_tasks": n_tasks,
+      "max_atoms": max_atoms,
+      "layer_structures": layer_structures,
+      "atom_number_cases": atom_number_cases,
+      "activation": self.activation,
+      "feat_dir": feat_dir,
+      "batch_norms": self.batch_norms,
+      "dropouts": self.dropouts,
+      "loss_fn": self.loss_fn,
+      "max_norms": self.max_norms
     }
 
     self._kwargs.update(kwargs)
-
     self.build_graph()
     self.grad = None
 
@@ -192,9 +206,9 @@ class ANIRegression(TensorGraph):
 
       feed_dict = dict()
       feed_dict = {
-          self.mode: True,
-          self.dequeue_object: np.array(
-              dataset.X[:upper_lim, :, :], dtype=float)
+        self.mode: True,
+        self.dequeue_object: np.array(
+          dataset.X[:upper_lim, :, :], dtype=float)
       }
 
       return self.session.run([self.grad], feed_dict=feed_dict)
@@ -229,7 +243,7 @@ class ANIRegression(TensorGraph):
     Z[:A.shape[0], :A.shape[1]] = A
     X = Z
     dd = dc.data.NumpyDataset(
-        np.array(X).reshape((1, self.max_atoms, 4)), np.array(0), np.array(1))
+      np.array(X).reshape((1, self.max_atoms, 4)), np.array(0), np.array(1))
     return self.predict(dd)[0]
 
   def grad_one(self, X, atomic_nums, constraints=None):
@@ -295,13 +309,13 @@ class ANIRegression(TensorGraph):
     num_atoms = atomic_nums.shape[0]
 
     res = scipy.optimize.minimize(
-        self.pred_one,
-        X,
-        args=(atomic_nums, constraints),
-        jac=self.grad_one,
-        method="BFGS",
-        tol=1e-6,
-        options={'disp': True})
+      self.pred_one,
+      X,
+      args=(atomic_nums, constraints),
+      jac=self.grad_one,
+      method="BFGS",
+      tol=1e-6,
+      options={'disp': True})
 
     return res.x.reshape((num_atoms, 3))
 
@@ -312,7 +326,7 @@ class ANIRegression(TensorGraph):
 
     def true_fn():
       r_feat = Reshape(
-          shape=[None, self.max_atoms, 4], in_layers=[self.dequeue_object])
+        shape=[None, self.max_atoms, 4], in_layers=[self.dequeue_object])
       r_feat.create_tensor()
 
       ani_feat = ANIFeat(in_layers=[r_feat], max_atoms=self.max_atoms)
@@ -325,25 +339,25 @@ class ANIRegression(TensorGraph):
       # dequeue yields a sparse tensor for the entire shard
 
       r_feat = Reshape(
-          shape=[None, self.max_atoms, 769], in_layers=[self.dequeue_object])
+        shape=[None, self.max_atoms, 769], in_layers=[self.dequeue_object])
       r_feat.create_tensor()
       return r_feat
 
     self.featurized = Conditional(
-        in_layers=[self.mode, self.dequeue_object],
-        true_fn=true_fn,
-        false_fn=false_fn)
+      in_layers=[self.mode, self.dequeue_object],
+      true_fn=true_fn,
+      false_fn=false_fn)
 
     previous_layer = self.featurized
 
     Hiddens = []
     for n_hidden in self.layer_structures:
       Hidden = AtomicDifferentiatedDense(
-          self.max_atoms,
-          n_hidden,
-          self.atom_number_cases,
-          activation='tanh',
-          in_layers=[previous_layer, self.featurized])
+        self.max_atoms,
+        n_hidden,
+        self.atom_number_cases,
+        activation=self.activation,
+        in_layers=[previous_layer, self.featurized])
       Hiddens.append(Hidden)
       previous_layer = Hiddens[-1]
 
@@ -397,22 +411,21 @@ class ANIRegression(TensorGraph):
             batch_size=batch_size,
             deterministic=deterministic,
             pad_batches=pad_batches):
-
           mode = cself.get_pre_q_input(cself.mode)
           obj = cself.get_pre_q_input(cself.dequeue_object)
           lab = cself.get_pre_q_input(cself.labels[0])
           weights = cself.get_pre_q_input(cself.task_weights[0])
 
           cself.session.run(
-              cself.input_queue,
-              feed_dict={
-                  mode: True,
-                  obj: X_b,
-                  lab: np.zeros(
-                      (batch_size, 1)
-                  ),  # TODO(ytz): would be nice if we didn't have to feed dummys
-                  weights: np.zeros((batch_size, 1)),
-              })
+            cself.input_queue,
+            feed_dict={
+              mode: True,
+              obj: X_b,
+              lab: np.zeros(
+                (batch_size, 1)
+              ),  # TODO(ytz): would be nice if we didn't have to feed dummys
+              weights: np.zeros((batch_size, 1)),
+            })
 
           all_ybs.append(y_b)
           all_wbs.append(w_b)
@@ -458,10 +471,11 @@ class ANIRegression(TensorGraph):
       pool.close()
       t1.join()
 
-    self.feat_dataset = dc.data.DiskDataset.create_dataset(
-        shard_generator=shard_generator(self),
-        data_dir=self.feat_dir,
-        X_is_sparse=True)
+    feat_dataset = dc.data.DiskDataset.create_dataset(
+      shard_generator=shard_generator(self),
+      data_dir=None,
+      X_is_sparse=True)
+    self.feat_dataset = feat_dataset.shuffle(self.feat_dir, batch_size)
 
     # print("Finished featurization, total_time: " + strtime.time()-start_time + " seconds.")
 
@@ -478,16 +492,15 @@ class ANIRegression(TensorGraph):
 
       if not deterministic:
         raise Exception(
-            "Called predict with non-deterministic generator, terrible idea.")
+          "Called predict with non-deterministic generator, terrible idea.")
 
       for (X_b, y_b, w_b, ids_b) in dataset.iterbatches(
           batch_size=self.batch_size,
           deterministic=deterministic,
           pad_batches=pad_batches):
-
         feed_dict = {
-            self.mode: True,
-            self.dequeue_object: X_b,
+          self.mode: True,
+          self.dequeue_object: X_b,
         }
 
         yield feed_dict
@@ -531,12 +544,12 @@ class ANIRegression(TensorGraph):
         save_dict[all_vars[idx].name] = all_vals[idx]
 
       save_dict["_kwargs"] = np.array(
-          [json.dumps(self._kwargs)], dtype=np.string_)
+        [json.dumps(self._kwargs)], dtype=np.string_)
 
       np.savez(path, **save_dict)
 
   @classmethod
-  def load_numpy(cls, model_dir):
+  def load_numpy(cls, model_dir, batch_size=None):
     """
     Load from a portable numpy file.
 
@@ -552,6 +565,8 @@ class ANIRegression(TensorGraph):
     json_blob = npo["_kwargs"][0].decode('UTF-8')
 
     kwargs = json.loads(json_blob)
+    if batch_size is not None:
+      kwargs['batch_size'] = batch_size
 
     obj = cls(**kwargs)
     obj.build()
