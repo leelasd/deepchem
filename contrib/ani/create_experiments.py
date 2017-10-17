@@ -206,7 +206,7 @@ c = conn.cursor()
 #
 d = {
   'activation': 'gaussian',
-  'data_length': 8,
+  'data_length': 4,
   'learning_rate': 0.000003,
   'loss_fn': 't_exp',
 }
