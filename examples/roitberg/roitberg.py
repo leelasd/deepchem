@@ -5,7 +5,6 @@ import tensorflow as tf
 
 import deepchem as dc
 import pyanitools as pya
-import app
 
 
 def convert_species_to_atomic_nums(s):
@@ -17,9 +16,9 @@ def convert_species_to_atomic_nums(s):
 
 
 # replace with your own scratch directory
-data_dir = "/media/yutong/fast_datablob/datasets"
-model_dir = "/media/yutong/fast_datablob/models"
-feat_dir = "/media/yutong/fast_datablob/feat"
+data_dir = "/media/store/ANI-1/datasets"
+model_dir = "/media/store/fast_datablob/models"
+feat_dir = "/media/store/fast_datablob/feat"
 
 all_dir = os.path.join(data_dir, "all")
 test_dir = os.path.join(data_dir, "test")
@@ -48,12 +47,8 @@ def load_roiterberg_ANI(mode="atomization"):
     and c is an array of indices denoting the group of each 
 
   """
-  if "ROITBERG_ANI" not in os.environ:
-    raise ValueError(
-        "Please set environment variable ROITBERG_ANI to where the ani_dgb_s0x.h5 files are."
-    )
-
-  base_dir = os.environ["ROITBERG_ANI"]
+  # base_dir = os.environ["ROITBERG_ANI"]
+  base_dir = "/media/store/ANI-1/raw"
 
   # Number of conformations in each file increases exponentially.
   # Start with a smaller dataset before continuing. Use all of them
@@ -295,5 +290,5 @@ if __name__ == "__main__":
   # print("Minimization of a single test set structure:")
   # print(model.minimize_structure(coords, atomic_nums))
 
-  app.webapp.model = model
-  app.webapp.run(host='0.0.0.0', debug=False)
+  # app.webapp.model = model
+  # app.webapp.run(host='0.0.0.0', debug=False)
