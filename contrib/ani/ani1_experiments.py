@@ -324,6 +324,8 @@ def main(model_dir, exp_id, num_epochs, kwargs):
       loss_fn=loss_fn,
       max_norms=max_norms)
     model.build()
+    if os.path.exists(feat_dir):
+      model.feat_dataset = dc.data.DiskDataset(data_dir=feat_dir)
 
   metric = [
     dc.metrics.Metric(dc.metrics.mean_absolute_error, mode="regression"),

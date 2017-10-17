@@ -473,9 +473,9 @@ class ANIRegression(TensorGraph):
 
     feat_dataset = dc.data.DiskDataset.create_dataset(
       shard_generator=shard_generator(self),
-      data_dir=None,
+      data_dir=self.feat_dir,
       X_is_sparse=True)
-    self.feat_dataset = feat_dataset.shuffle(self.feat_dir, batch_size)
+    self.feat_dataset = feat_dataset
 
     # print("Finished featurization, total_time: " + strtime.time()-start_time + " seconds.")
 
