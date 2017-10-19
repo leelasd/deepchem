@@ -341,8 +341,12 @@ class ANIRegression(TensorGraph):
     costs = []
     self.labels_fd = []
     for task in range(self.n_tasks):
-      regression = Dense(
-        out_channels=1, activation_fn=None, in_layers=[Hiddens[-1]])
+      regression = AtomicDifferentiatedDense(
+        self.max_atoms,
+        1,
+        self.atom_number_cases,
+        activation=self.activation,
+        in_layers=[previous_layer, self.atom_numbers])
       output = BPGather(self.max_atoms, in_layers=[regression, self.atom_flags])
       self.add_output(output)
 
