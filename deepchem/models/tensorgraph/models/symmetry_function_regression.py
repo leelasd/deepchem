@@ -345,7 +345,7 @@ class ANIRegression(TensorGraph):
         self.max_atoms,
         1,
         self.atom_number_cases,
-        activation=self.activation,
+        activation=None,
         in_layers=[previous_layer, self.atom_numbers])
       output = BPGather(self.max_atoms, in_layers=[regression, self.atom_flags])
       self.add_output(output)
