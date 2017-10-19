@@ -360,11 +360,20 @@ class ANIRegression(TensorGraph):
         in_layers=[previous_layer, self.featurized])
       Hiddens.append(Hidden)
       previous_layer = Hiddens[-1]
+    Hidden = AtomicDifferentiatedDense(
+      self.max_atoms,
+      1,
+      self.atom_number_cases,
+      activation=None,
+      in_layers=[previous_layer, self.featurized])
+    Hiddens.append(Hidden)
 
     costs = []
     self.labels_fd = []
     for task in range(self.n_tasks):
-      output = BPGather2(in_layers=[Hiddens[-1], self.featurized])
+      regression = Hiddens[-1]
+      # regression = Dense(out_channels=1, activation_fn=None, in_layers=[Hiddens[-1]])
+      output = BPGather2(in_layers=[regression, self.featurized])
       self.add_output(output)
 
       label = Label(shape=(None, 1))
