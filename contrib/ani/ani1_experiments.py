@@ -410,5 +410,6 @@ if __name__ == "__main__":
   oid, model_folder, num_epochs, kwargs_json, status = get_experiment()
   model_dir = "%s/%s" % (json.loads(open('paths.json').read())['models_dir'], model_folder)
   kwargs_json = json.loads(kwargs_json)
+  main(model_dir, oid, num_epochs, kwargs_json)
   set_exp_finished(oid)
   # dev()
