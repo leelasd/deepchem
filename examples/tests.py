@@ -41,8 +41,6 @@ if __name__ == "__main__":
   folders = list(filter(lambda x: os.path.isdir(x), os.listdir('./')))
   for folder in folders:
     print(folder)
-    if folder != 'tox21':
-      continue
     os.chdir(folder)
     files = list(filter(lambda x: x.endswith('.py'), os.listdir('./')))
     for f in files:
@@ -50,11 +48,11 @@ if __name__ == "__main__":
       print(cmd)
       c = delegator.run(cmd)
 
-      outfile = os.path.basename(f) + ".out"
+      outfile = os.path.join('../example_tests', os.path.splitext(f)[0] + ".out")
       with open(outfile, 'w') as fout:
         fout.write(c.out)
 
-      errfile = os.path.basename(f) + ".err"
+      errfile = os.path.join('../example_tests', os.path.splitext(f)[0] + ".err")
       with open(errfile, 'w') as fout:
         fout.write(c.err)
     os.chdir('../')
