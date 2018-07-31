@@ -186,6 +186,17 @@ class TestDatasets(test_util.TensorFlowTestCase):
     multitask_dataset = dc.data.tests.load_multitask_data()
     assert multitask_dataset.get_data_shape() == (1024,)
 
+  def test_to_numpy(self):
+    """Test that get_data_shape returns currect data shape"""
+    solubility_dataset = dc.data.tests.load_solubility_data()
+    self.assertTrue(isinstance(solubility_dataset, dc.data.DiskDataset))
+    np_dataset = solubility_dataset.to_numpy()
+    self.assertTrue(isinstance(np_dataset, dc.data.NumpyDataset))
+    self.assertTrue(np.all(np_dataset.X == solubility_dataset.X))
+    self.assertTrue(np.all(np_dataset.y == solubility_dataset.y))
+    self.assertTrue(np.all(np_dataset.w == solubility_dataset.w))
+    self.assertTrue(np.all(np_dataset.ids == solubility_dataset.ids))
+
   def test_len(self):
     """Test that len(dataset) works."""
     solubility_dataset = dc.data.tests.load_solubility_data()

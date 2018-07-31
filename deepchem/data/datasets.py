@@ -302,6 +302,9 @@ class Dataset(object):
     dataset = tf.data.Dataset.from_generator(gen_data, dtypes, shapes)
     return dataset.make_one_shot_iterator()
 
+  def to_numpy(self):
+    return NumpyDataset(self.X, self.y, self.w, self.ids)
+
 
 class NumpyDataset(Dataset):
   """A Dataset defined by in-memory numpy arrays."""
@@ -1205,8 +1208,8 @@ class DiskDataset(Dataset):
           if indices_count + num_shard_elts >= len(indices):
             break
         # Need to offset indices to fit within shard_size
-        shard_inds = indices[indices_count:
-                             indices_count + num_shard_elts] - count
+        shard_inds = indices[indices_count:indices_count +
+                             num_shard_elts] - count
         X_sel = X[shard_inds]
         # Handle the case of datasets with y/w missing
         if y is not None:
