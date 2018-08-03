@@ -3,6 +3,7 @@ import os
 import pickle
 import threading
 import time
+import json
 
 import logging
 import numpy as np
@@ -100,6 +101,20 @@ class TensorGraph(Model):
       raise ValueError(
           "Currently TensorGraph cannot both use_queue and tensorboard at the same time"
       )
+
+  def _save_kwargs(self, additional_kwargs):
+    kwargs = {
+        "tensorboard": self.tensorboard,
+        "tensorboard_log_frequency": self.tensorboard_log_frequency,
+        "batch_size": self.batch_size,
+        "random_seed": self.random_seed,
+        "use_queue": self.use_queue,
+        "model_dir": self.model_dir
+    }
+    kwargs.update(additional_kwargs)
+    kwargs_path = os.path.join(self.model_dir, 'kwargs.json')
+    with open(kwargs_path, 'w') as fout:
+      fout.write(json.dumps(kwargs))
 
   def _add_layer(self, layer):
     if layer.name is None:
@@ -610,6 +625,7 @@ class TensorGraph(Model):
     return sorted_layers
 
   def build(self):
+    print(self.built)
     if self.built:
       return
     if tfe.in_eager_mode():
@@ -656,6 +672,7 @@ class TensorGraph(Model):
       return
 
     # In graph mode we need to create the computation graph.
+    print("Actually building")
 
     with self._get_tf("Graph").as_default():
       self._training_placeholder = tf.placeholder(dtype=tf.float32, shape=())
@@ -699,7 +716,7 @@ class TensorGraph(Model):
       writer = self._get_tf("FileWriter")
       writer.add_graph(self._get_tf("Graph"))
       writer.close()
-
+    print(self.get_variables())
     # As a sanity check, make sure all tensors have the correct shape.
 
     for layer in self.layers.values():
@@ -1017,7 +1034,9 @@ class TensorGraph(Model):
       checkpoint will be chosen automatically.  Call get_checkpoints() to get a
       list of all available checkpoints.
     """
+    print(self.built)
     if not self.built:
+      print("building")
       self.build()
     if checkpoint is None:
       checkpoint = tf.train.latest_checkpoint(self.model_dir)
@@ -1044,18 +1063,30 @@ class TensorGraph(Model):
     pre_q_name = "%s_pre_q" % layer_name
     return self.layers[pre_q_name]
 
+  @classmethod
+  def load_from_dir(cls, model_dir):
+    kwargs_file = os.path.join(model_dir, 'kwargs.json')
+    if not os.path.exists(kwargs_file):
+      return TensorGraph.load_from_dir(model_dir)
+    kwargs = json.loads(open(kwargs_file).read())
+    kwargs['model_dir'] = model_dir
+    model = cls(**kwargs)
+    model.restore()
+    return model
+
   @staticmethod
-  def load_from_dir(model_dir, restore=True):
+  def load_from_dir_depr(model_dir, restore=True):
     pickle_name = os.path.join(model_dir, "model.pickle")
     with open(pickle_name, 'rb') as fout:
       tensorgraph = pickle.load(fout)
       tensorgraph.built = False
+      print(tensorgraph.built)
       tensorgraph.model_dir = model_dir
       if restore:
         try:
           tensorgraph.restore()
-        except ValueError:
-          pass  # No checkpoint to load
+        except ValueError as e:
+          pass
       return tensorgraph
 
   def __del__(self):

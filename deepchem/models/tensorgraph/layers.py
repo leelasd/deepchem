@@ -936,7 +936,7 @@ class CombineMeanStd(Layer):
       raise ValueError("Must have two in_layers")
     mean_parent, std_parent = inputs[0], inputs[1]
     sample_noise = tf.random_normal(
-        mean_parent.get_shape(), 0, self.noise_epsilon, dtype=tf.float32)
+        tf.shape(mean_parent), 0, self.noise_epsilon, dtype=tf.float32)
     if self.training_only and 'training' in kwargs:
       sample_noise *= kwargs['training']
     out_tensor = mean_parent + tf.exp(std_parent * 0.5) * sample_noise
@@ -1292,6 +1292,41 @@ class L1Loss(Layer):
     if len(inputs) > 2:
       l1 *= inputs[2]
     out_tensor = tf.reduce_mean(l1, axis=list(range(1, len(label.shape))))
+    if set_tensors:
+      self.out_tensor = out_tensor
+    return out_tensor
+
+
+class KLDivergenceLoss(Layer):
+
+  def __init__(self,
+               in_layers=None,
+               annealing_start_step=500,
+               annealing_final_step=1000,
+               **kwargs):
+    self.annealing_start_step = 500
+    self.annealing_final_step = annealing_final_step
+    super(KLDivergenceLoss, self).__init__(in_layers, **kwargs)
+    try:
+      self._shape = ()
+    except:
+      pass
+
+  def create_tensor(self, in_layers=None, set_tensors=True, **kwargs):
+    mean, std, global_step = self._get_input_tensors(in_layers, True)
+    mean_sq = mean * mean
+    stddev_sq = std * std
+    kl = mean_sq + stddev_sq - tf.log(stddev_sq + 1e-20) - 1
+    anneal_steps = self.annealing_final_step - self.annealing_start_step
+    if anneal_steps > 0:
+      current_step = tf.to_float(global_step) - self.annealing_start_step
+      anneal_frac = tf.maximum(0.0, current_step) / anneal_steps
+      kl_scale = tf.minimum(1.0, anneal_frac * anneal_frac)
+    else:
+      kl_scale = 1.0
+    out_tensor = 0.5 * kl_scale * tf.reduce_mean(tf.reduce_sum(kl, axis=1))
+    out_tensor = tf.squeeze(out_tensor)
+
     if set_tensors:
       self.out_tensor = out_tensor
     return out_tensor
