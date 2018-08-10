@@ -460,8 +460,9 @@ class TensorGraph(Model):
 
       final_results = []
       for result_list in results:
+        if len(result_list) > 0 and result_list[0].shape == ():
+          result_list = [[x] for x in result_list]
         final_results.append(np.concatenate(result_list, axis=0))
-      # If only one output, just return array
       if len(final_results) == 1:
         return final_results[0]
       elif uncertainty:
@@ -625,7 +626,6 @@ class TensorGraph(Model):
     return sorted_layers
 
   def build(self):
-    print(self.built)
     if self.built:
       return
     if tfe.in_eager_mode():
@@ -672,7 +672,6 @@ class TensorGraph(Model):
       return
 
     # In graph mode we need to create the computation graph.
-    print("Actually building")
 
     with self._get_tf("Graph").as_default():
       self._training_placeholder = tf.placeholder(dtype=tf.float32, shape=())
@@ -716,7 +715,6 @@ class TensorGraph(Model):
       writer = self._get_tf("FileWriter")
       writer.add_graph(self._get_tf("Graph"))
       writer.close()
-    print(self.get_variables())
     # As a sanity check, make sure all tensors have the correct shape.
 
     for layer in self.layers.values():
@@ -990,6 +988,7 @@ class TensorGraph(Model):
       opt = self._get_tf('Optimizer')
       global_step = self._get_tf('GlobalStep')
       try:
+        print("Making Train Op")
         self.tensor_objects['train_op'] = opt.minimize(
             self.loss.out_tensor, global_step=global_step)
       except ValueError:
@@ -1034,9 +1033,7 @@ class TensorGraph(Model):
       checkpoint will be chosen automatically.  Call get_checkpoints() to get a
       list of all available checkpoints.
     """
-    print(self.built)
     if not self.built:
-      print("building")
       self.build()
     if checkpoint is None:
       checkpoint = tf.train.latest_checkpoint(self.model_dir)
@@ -1080,7 +1077,6 @@ class TensorGraph(Model):
     with open(pickle_name, 'rb') as fout:
       tensorgraph = pickle.load(fout)
       tensorgraph.built = False
-      print(tensorgraph.built)
       tensorgraph.model_dir = model_dir
       if restore:
         try:

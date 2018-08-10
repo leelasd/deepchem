@@ -74,10 +74,10 @@ class Adam(Optimizer):
     else:
       learning_rate = self.learning_rate
     return tf.train.AdamOptimizer(
-        learning_rate=learning_rate,
-        beta1=self.beta1,
-        beta2=self.beta2,
-        epsilon=self.epsilon)
+      learning_rate=learning_rate,
+      beta1=self.beta1,
+      beta2=self.beta2,
+      epsilon=self.epsilon)
 
 
 class GradientDescent(Optimizer):
@@ -121,7 +121,7 @@ class PowerSign(Optimizer):
     else:
       learning_rate = self.learning_rate
     return tf.contrib.opt.PowerSignOptimizer(
-        learning_rate=learning_rate, beta=self.beta)
+      learning_rate=learning_rate, beta=self.beta)
 
 
 class ExponentialDecay(LearningRateSchedule):
@@ -151,11 +151,33 @@ class ExponentialDecay(LearningRateSchedule):
 
   def _create_tensor(self, global_step):
     return tf.train.exponential_decay(
-        learning_rate=self.initial_rate,
-        global_step=global_step,
-        decay_rate=self.decay_rate,
-        decay_steps=self.decay_steps,
-        staircase=self.staircase)
+      learning_rate=self.initial_rate,
+      global_step=global_step,
+      decay_rate=self.decay_rate,
+      decay_steps=self.decay_steps,
+      staircase=self.staircase)
+
+
+class CyclicSchedule(LearningRateSchedule):
+  """
+  Alternate Between Min And Max
+  with period 2 * step_size
+
+  """
+
+  def __init__(self, min_lr, max_lr, step_size=200):
+    self.min_lr = min_lr
+    self.max_lr = max_lr
+    self.delta = self.max_lr - self.min_lr
+    self.step_size = step_size
+
+  def _create_tensor(self, global_step):
+    f_global_step = tf.cast(global_step, tf.float32)
+    step_size = tf.constant(self.step_size, tf.float32)
+
+    cycle = tf.floor(1.0 + f_global_step / (2.0 * step_size))
+    x = tf.abs(tf.divide(f_global_step, step_size) - 2.0 * cycle + 1.0)
+    return self.min_lr + self.delta + tf.maximum(0.0, (1.0 - x))
 
 
 class PolynomialDecay(LearningRateSchedule):
@@ -186,11 +208,11 @@ class PolynomialDecay(LearningRateSchedule):
 
   def _create_tensor(self, global_step):
     return tf.train.polynomial_decay(
-        learning_rate=self.initial_rate,
-        end_learning_rate=self.final_rate,
-        global_step=global_step,
-        decay_steps=self.decay_steps,
-        power=self.power)
+      learning_rate=self.initial_rate,
+      end_learning_rate=self.final_rate,
+      global_step=global_step,
+      decay_steps=self.decay_steps,
+      power=self.power)
 
 
 class LinearCosineDecay(LearningRateSchedule):
@@ -220,9 +242,9 @@ class LinearCosineDecay(LearningRateSchedule):
 
   def _create_tensor(self, global_step):
     return tf.train.linear_cosine_decay(
-        learning_rate=self.initial_rate,
-        global_step=global_step,
-        decay_steps=self.decay_steps,
-        alpha=self.alpha,
-        beta=self.beta,
-        num_periods=self.num_periods)
+      learning_rate=self.initial_rate,
+      global_step=global_step,
+      decay_steps=self.decay_steps,
+      alpha=self.alpha,
+      beta=self.beta,
+      num_periods=self.num_periods)

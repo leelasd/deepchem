@@ -16,21 +16,28 @@ class TestVaeModel(TestCase):
   def test_vae_model(self):
     n_features = 3
     model = VaeModel(
-        n_features=n_features,
-        use_queue=False,
-        kl_annealing_start_step=0,
-        kl_annealing_stop_step=0)
+      n_features=n_features,
+      latent_size=5,
+      use_queue=False,
+      kl_annealing_start_step=0,
+      kl_annealing_stop_step=0)
     ds = self.create_dataset(n_features)
 
-    model.fit(ds, nb_epoch=1000)
+    model.fit(ds, nb_epoch=1)
 
     means = model.predict(ds, outputs=model.mean)
     reconstructions = model.predict(ds, outputs=model.reconstruction)
+    r_loss = model.predict(ds, outputs=model.reproduction_loss)
+    kl_loss = model.predict(ds, outputs=model.kl_loss)
     model.save()
 
     model = VaeModel.load_from_dir(model.model_dir)
 
     m2 = model.predict(ds, outputs=model.mean)
     r2 = model.predict(ds, outputs=model.reconstruction)
+    r_l = model.predict(ds, outputs=model.reproduction_loss)
+    kl_loss2 = model.predict(ds, outputs=model.reproduction_loss)
     self.assertTrue(np.all(means == m2))
     self.assertTrue(np.all(reconstructions == r2))
+    self.assertTrue(np.all(r_loss == r_l))
+    self.assertTrue(np.all(kl_loss == kl_loss2))

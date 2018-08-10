@@ -1,4 +1,6 @@
 import tensorflow as tf
+import os
+import json
 from deepchem.models import TensorGraph
 from deepchem.models.tensorgraph.layers import Feature, CombineMeanStd, Weights, Dense, L2Loss, KLDivergenceLoss, Add, \
   TensorWrapper, ReduceSum
@@ -10,12 +12,14 @@ class VaeModel(TensorGraph):
 
   def __init__(self,
                n_features,
+               latent_size,
                encoder_layers=[512, 512, 521],
                decoder_layers=[512, 512, 512],
                kl_annealing_start_step=500,
                kl_annealing_stop_step=1000,
                **kwargs):
     self.n_features = n_features
+    self.latent_size = latent_size
     self.encoder_layers = encoder_layers
     self.decoder_layers = decoder_layers
     self.kl_annealing_start_step = kl_annealing_start_step
@@ -33,8 +37,8 @@ class VaeModel(TensorGraph):
           activation_fn=tf.nn.elu,
           out_channels=layer_size)
 
-    self.mean = Dense(in_layers=last_layer, activation_fn=None, out_channels=1)
-    self.std = Dense(in_layers=last_layer, activation_fn=None, out_channels=1)
+    self.mean = Dense(in_layers=last_layer, activation_fn=None, out_channels=self.latent_size)
+    self.std = Dense(in_layers=last_layer, activation_fn=None, out_channels=self.latent_size)
 
     readout = CombineMeanStd([self.mean, self.std], training_only=True)
     last_layer = readout
@@ -44,16 +48,18 @@ class VaeModel(TensorGraph):
 
     self.reconstruction = Dense(
         in_layers=last_layer, activation_fn=None, out_channels=self.n_features)
-    weights = Weights(shape=(None, self.n_features))
+    #weights = Weights(shape=(None, self.n_features))
+    #reproduction_loss = L2Loss(
+    #    in_layers=[features, self.reconstruction, weights])
     reproduction_loss = L2Loss(
-        in_layers=[features, self.reconstruction, weights])
-    reproduction_loss = ReduceSum(in_layers=reproduction_loss, axis=0)
+        in_layers=[features, self.reconstruction])
+    self.reproduction_loss = ReduceSum(in_layers=reproduction_loss, axis=0)
     global_step = TensorWrapper(self._get_tf("GlobalStep"))
-    kl_loss = KLDivergenceLoss(
+    self.kl_loss = KLDivergenceLoss(
         in_layers=[self.mean, self.std, global_step],
         annealing_start_step=self.kl_annealing_start_step,
         annealing_stop_step=self.kl_annealing_stop_step)
-    loss = Add(in_layers=[kl_loss, reproduction_loss], weights=[0.5, 1])
+    loss = Add(in_layers=[self.kl_loss, self.reproduction_loss], weights=[0.5, 1])
 
     self.add_output(self.mean)
     self.add_output(self.reconstruction)
@@ -62,6 +68,7 @@ class VaeModel(TensorGraph):
   def save_kwargs(self):
     return {
         "n_features": self.n_features,
+        "latent_size": self.latent_size,
         "encoder_layers": self.encoder_layers,
         "decoder_layers": self.decoder_layers,
         "kl_annealing_start_step": self.kl_annealing_start_step,
@@ -69,12 +76,14 @@ class VaeModel(TensorGraph):
     }
 
   @classmethod
-  def load_from_dir(cls, model_dir):
+  def load_from_dir(cls, model_dir, restore=True, update_kwargs={}):
     kwargs_file = os.path.join(model_dir, 'kwargs.json')
+    print(kwargs_file)
     if not os.path.exists(kwargs_file):
       return VaeModel.load_from_dir(model_dir)
     kwargs = json.loads(open(kwargs_file).read())
     kwargs['model_dir'] = model_dir
+    kwargs.update(update_kwargs)
     model = cls(**kwargs)
     model.restore()
     return model
@@ -90,5 +99,22 @@ class VaeModel(TensorGraph):
     }
     d.update(self.save_kwargs())
     kwargs_path = os.path.join(self.model_dir, 'kwargs.json')
+    print("saving to %s" % kwargs_path)
     with open(kwargs_path, 'w') as fout:
       fout.write(json.dumps(d))
+
+  def default_generator(self,
+                        dataset,
+                        epochs=1,
+                        predict=False,
+                        deterministic=True,
+                        pad_batches=True):
+    for epoch in range(epochs):
+      for (X_b, y_b, w_b, ids_b) in dataset.iterbatches(
+          batch_size=self.batch_size,
+          deterministic=deterministic,
+          pad_batches=pad_batches):
+        feed_dict = dict()
+        feed_dict[self.features[0]] = X_b
+        yield feed_dict
+

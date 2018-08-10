@@ -1313,7 +1313,8 @@ class KLDivergenceLoss(Layer):
       pass
 
   def create_tensor(self, in_layers=None, set_tensors=True, **kwargs):
-    mean, std, global_step = self._get_input_tensors(in_layers, True)
+    mean, std, global_step = self._get_input_tensors(in_layers, False)
+    print(mean.get_shape(), std.get_shape())
     mean_sq = mean * mean
     stddev_sq = std * std
     kl = mean_sq + stddev_sq - tf.log(stddev_sq + 1e-20) - 1

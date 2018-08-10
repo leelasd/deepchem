@@ -1,6 +1,7 @@
 from __future__ import division
 from __future__ import unicode_literals
 
+import deepchem
 import numpy as np
 from rdkit import Chem
 
@@ -11,7 +12,7 @@ from deepchem.feat.mol_graphs import ConvMol, WeaveMol
 def one_of_k_encoding(x, allowable_set):
   if x not in allowable_set:
     raise Exception("input {0} not in allowable set{1}:".format(
-        x, allowable_set))
+      x, allowable_set))
   return list(map(lambda s: x == s, allowable_set))
 
 
@@ -42,24 +43,24 @@ def safe_index(l, e):
 
 
 possible_atom_list = [
-    'C', 'N', 'O', 'S', 'F', 'P', 'Cl', 'Mg', 'Na', 'Br', 'Fe', 'Ca', 'Cu',
-    'Mc', 'Pd', 'Pb', 'K', 'I', 'Al', 'Ni', 'Mn'
+  'C', 'N', 'O', 'S', 'F', 'P', 'Cl', 'Mg', 'Na', 'Br', 'Fe', 'Ca', 'Cu',
+  'Mc', 'Pd', 'Pb', 'K', 'I', 'Al', 'Ni', 'Mn'
 ]
 possible_numH_list = [0, 1, 2, 3, 4]
 possible_valence_list = [0, 1, 2, 3, 4, 5, 6]
 possible_formal_charge_list = [-3, -2, -1, 0, 1, 2, 3]
 possible_hybridization_list = [
-    Chem.rdchem.HybridizationType.SP, Chem.rdchem.HybridizationType.SP2,
-    Chem.rdchem.HybridizationType.SP3, Chem.rdchem.HybridizationType.SP3D,
-    Chem.rdchem.HybridizationType.SP3D2
+  Chem.rdchem.HybridizationType.SP, Chem.rdchem.HybridizationType.SP2,
+  Chem.rdchem.HybridizationType.SP3, Chem.rdchem.HybridizationType.SP3D,
+  Chem.rdchem.HybridizationType.SP3D2
 ]
 possible_number_radical_e_list = [0, 1, 2]
 possible_chirality_list = ['R', 'S']
 
 reference_lists = [
-    possible_atom_list, possible_numH_list, possible_valence_list,
-    possible_formal_charge_list, possible_number_radical_e_list,
-    possible_hybridization_list, possible_chirality_list
+  possible_atom_list, possible_numH_list, possible_valence_list,
+  possible_formal_charge_list, possible_number_radical_e_list,
+  possible_hybridization_list, possible_chirality_list
 ]
 
 intervals = get_intervals(reference_lists)
@@ -179,11 +180,11 @@ def atom_features(atom,
     if use_chirality:
       try:
         results = results + one_of_k_encoding_unk(
-            atom.GetProp('_CIPCode'),
-            ['R', 'S']) + [atom.HasProp('_ChiralityPossible')]
+          atom.GetProp('_CIPCode'),
+          ['R', 'S']) + [atom.HasProp('_ChiralityPossible')]
       except:
         results = results + [False, False
-                            ] + [atom.HasProp('_ChiralityPossible')]
+                             ] + [atom.HasProp('_ChiralityPossible')]
 
     return np.array(results)
 
@@ -191,15 +192,15 @@ def atom_features(atom,
 def bond_features(bond, use_chirality=False):
   bt = bond.GetBondType()
   bond_feats = [
-      bt == Chem.rdchem.BondType.SINGLE, bt == Chem.rdchem.BondType.DOUBLE,
-      bt == Chem.rdchem.BondType.TRIPLE, bt == Chem.rdchem.BondType.AROMATIC,
-      bond.GetIsConjugated(),
-      bond.IsInRing()
+    bt == Chem.rdchem.BondType.SINGLE, bt == Chem.rdchem.BondType.DOUBLE,
+    bt == Chem.rdchem.BondType.TRIPLE, bt == Chem.rdchem.BondType.AROMATIC,
+    bond.GetIsConjugated(),
+    bond.IsInRing()
   ]
   if use_chirality:
     bond_feats = bond_feats + one_of_k_encoding_unk(
-        str(bond.GetStereo()),
-        ["STEREONONE", "STEREOANY", "STEREOZ", "STEREOE"])
+      str(bond.GetStereo()),
+      ["STEREONONE", "STEREOANY", "STEREOZ", "STEREOE"])
   return np.array(bond_feats)
 
 
@@ -217,7 +218,7 @@ def pair_features(mol, edge_list, canon_adj_list, bt_len=6,
     for a2 in canon_adj_list[a1]:
       # first `bt_len` features are bond features(if applicable)
       features[a1, a2, :bt_len] = np.asarray(
-          edge_list[tuple(sorted((a1, a2)))], dtype=float)
+        edge_list[tuple(sorted((a1, a2)))], dtype=float)
     for ring in rings:
       if a1 in ring:
         # `bt_len`-th feature is if the pair of atoms are in the same ring
@@ -226,7 +227,7 @@ def pair_features(mol, edge_list, canon_adj_list, bt_len=6,
     # graph distance between two atoms
     if graph_distance:
       distance = find_distance(
-          a1, num_atoms, canon_adj_list, max_distance=max_distance)
+        a1, num_atoms, canon_adj_list, max_distance=max_distance)
       features[a1, :, bt_len + 1:] = distance
   # Euclidean distance between atoms
   if not graph_distance:
@@ -324,7 +325,7 @@ class ConvMolFeaturizer(Featurizer):
     # Get the node features
     idx_nodes = [(a.GetIdx(),
                   np.concatenate((atom_features(
-                      a, use_chirality=self.use_chirality),
+                    a, use_chirality=self.use_chirality),
                                   self._get_atom_properties(a))))
                  for a in mol.GetAtoms()]
 
@@ -339,7 +340,7 @@ class ConvMolFeaturizer(Featurizer):
 
     # Get bond lists with reverse edges included
     edge_list = [
-        (b.GetBeginAtomIdx(), b.GetEndAtomIdx()) for b in mol.GetBonds()
+      (b.GetBeginAtomIdx(), b.GetEndAtomIdx()) for b in mol.GetBonds()
     ]
 
     # Get canonical adjacency list
@@ -390,9 +391,9 @@ class WeaveFeaturizer(Featurizer):
     # Atom features
     idx_nodes = [(a.GetIdx(),
                   atom_features(
-                      a,
-                      explicit_H=self.explicit_H,
-                      use_chirality=self.use_chirality))
+                    a,
+                    explicit_H=self.explicit_H,
+                    use_chirality=self.use_chirality))
                  for a in mol.GetAtoms()]
     idx_nodes.sort()  # Sort by ind to ensure same order as rd_kit
     idx, nodes = list(zip(*idx_nodes))
@@ -405,7 +406,7 @@ class WeaveFeaturizer(Featurizer):
     for b in mol.GetBonds():
       edge_list[tuple(sorted([b.GetBeginAtomIdx(),
                               b.GetEndAtomIdx()]))] = bond_features(
-                                  b, use_chirality=self.use_chirality)
+        b, use_chirality=self.use_chirality)
 
     # Get canonical adjacency list
     canon_adj_list = [[] for mol_id in range(len(nodes))]
@@ -415,10 +416,29 @@ class WeaveFeaturizer(Featurizer):
 
     # Calculate pair features
     pairs = pair_features(
-        mol,
-        edge_list,
-        canon_adj_list,
-        bt_len=6,
-        graph_distance=self.graph_distance)
+      mol,
+      edge_list,
+      canon_adj_list,
+      bt_len=6,
+      graph_distance=self.graph_distance)
 
     return WeaveMol(nodes, pairs)
+
+
+class VaeConvMolFeaturizer(Featurizer):
+  def __init__(self, vae_model):
+    self.vae = vae_model
+    super(VaeConvMolFeaturizer, self).__init__()
+
+  def featurize(self, mols, verbose=True, log_every_n=1000):
+    featurizer = ConvMolFeaturizer()
+    conv_mols = featurizer.featurize(mols)
+    conv_atom_features = np.concatenate([x.atom_features for x in conv_mols])
+    ds = deepchem.data.NumpyDataset(conv_atom_features)
+    vae_atom_features = self.vae.predict(ds, outputs=self.vae.mean)
+    atom_index = 0
+    for conv_mol in conv_mols:
+      mol_size = len(conv_mol.atom_features)
+      conv_mol.atom_features = np.array(vae_atom_features[atom_index:atom_index + mol_size])
+      atom_index += mol_size
+    return conv_mols
